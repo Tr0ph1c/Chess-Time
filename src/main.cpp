@@ -1,34 +1,20 @@
 #include <iostream>
 
 #include "board.h"
+#include "GUI.cpp"
 
 
 Board board;
-
 
 void Start () {
     board.RestartBoard();
     board.PrintBoard();
 }
 
-int main () {
-    while (true) {
-        char c;
+int main (int argc, char** args) {
+    GUI::Init();
 
-        std::cout << "Input: ";
-        std::cin >> c;
+    Start();
 
-        switch (c) {
-            case '0':
-                exit(0);
-            case '1':
-                Start();
-                break;
-            case '2':
-                std::cout << "FUCK EVERYBODY";
-                break;
-            default:
-                std::cout << "invalid";
-        }
-    }
+    GUI::Shutdown();
 }

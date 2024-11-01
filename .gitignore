@@ -1,3 +1,4 @@
 *.exe
 .vscode/
 lib/
+SDL2.dll
