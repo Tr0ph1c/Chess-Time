@@ -23,7 +23,7 @@ void DrawPieceInside(SDL_Rect & dest ,int x ,int y){
     sprintf(text_buff,"%c",'p');
     SDL_Surface* textSurface = TTF_RenderText_Solid( ConsolaFont, text_buff, (SDL_Color){0, 0, 255,255} );
     SDL_Texture* text_texture = SDL_CreateTextureFromSurface( renderer, textSurface );
-    // SDL_FreeSurface(textSurface);
+    SDL_FreeSurface(textSurface);
     // Get texture width and height
     // int textWidth, textHeight;
 
@@ -125,7 +125,7 @@ void Init () {
 
 void Shutdown () {
     //font stuff
-    TTF_CloseFont( ConsolaFont );
+    // TTF_CloseFont( ConsolaFont ); // segmentation fault
     TTF_Quit();
     
     SDL_DestroyRenderer(renderer);
