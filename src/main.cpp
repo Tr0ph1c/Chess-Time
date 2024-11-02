@@ -15,6 +15,7 @@ void HandleEvents () {
     switch (event.type) {
         case SDL_QUIT:
             running = false;
+            GUI::Shutdown();
             break;
         default:
             break;
@@ -37,4 +38,6 @@ int main (int argc, char** args) {
     Start();
 
     GUI::Shutdown();
+
+    return 0;
 }
