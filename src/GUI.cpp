@@ -6,6 +6,7 @@
 namespace GUI {
 
 SDL_Window*  window;
+SDL_Renderer* renderer;
 
 void GUI () {
     SDL_Delay(3000);
@@ -19,13 +20,10 @@ void Init () {
 
     SDL_Init(SDL_INIT_VIDEO);
 
-    SDL_DisplayMode DM;
-    SDL_GetCurrentDisplayMode(0, &DM);
-
     window = SDL_CreateWindow (
         "Chess Time",
-        DM.w / 2.0f - WINDOW_W / 2.0f,
-        DM.h / 2.0f - WINDOW_H / 2.0f,
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
         WINDOW_W, // W
         WINDOW_H, // H
         SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS
@@ -36,10 +34,18 @@ void Init () {
         exit(-1);
     }
 
+    renderer = SDL_CreateRenderer(window, -1, 0);
+
+    if (renderer == NULL) {
+        fprintf(stderr, "Could not create renderer: %s\n", SDL_GetError());
+        exit(-1);
+    }
+
     GUI();
 }
 
 void Shutdown () {
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
