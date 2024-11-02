@@ -1,4 +1,6 @@
 *.exe
 .vscode/
 lib/
-SDL2.dll
+*.dll
+CMakeLists.txt
+.idea
