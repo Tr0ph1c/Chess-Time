@@ -2,3 +2,5 @@
 .vscode/
 lib/
 *.dll
+CMakeLists.txt
+.idea
