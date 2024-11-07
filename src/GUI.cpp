@@ -153,7 +153,7 @@ void Init (Board* _board) {
 void Shutdown () {
     IMG_Quit();
     SDL_DestroyTexture(pieces_png);
-    // TTF_CloseFont( ConsolaFont ); // segmentation fault
+    TTF_CloseFont( ConsolaFont ); // segmentation fault
     TTF_Quit();
     
     SDL_DestroyRenderer(renderer);
