@@ -27,6 +27,7 @@ void HandleEvents () {
 
 void Start () {
     board.RestartBoard();
+    board.PrintBoard();
     
     while (running) {
         start_frame = SDL_GetTicks();
@@ -41,7 +42,7 @@ void Start () {
 }
 
 int main (int argc, char** args) {
-    GUI::Init();
+    GUI::Init(&board);
 
     Start();
 

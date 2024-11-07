@@ -1,11 +1,19 @@
+#include "board.h"
+
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 #include "SDL2/SDL_ttf.h"
 
+#include <iostream>
+
 #define WINDOW_W 750
 #define WINDOW_H 750
 
+using namespace Pieces;
+
 namespace GUI {
+
+Board* board;
 
 SDL_Window*  window;
 SDL_Renderer* renderer;
@@ -13,46 +21,48 @@ SDL_Texture* pieces_png;
 
 // board
 SDL_Rect  BoardRect;
-SDL_Color WhiteSquareColor = {.r = 254 , .g = 250 , .b = 241 ,.a = 255} ;
-SDL_Color BlackSquareColor = {.r = 46 , .g = 7 , .b = 2 ,.a = 255} ;
+SDL_Color WhiteSquareColor = {.r = 255 , .g = 180 , .b = 100 ,.a = 255} ;
+SDL_Color BlackSquareColor = {.r = 150 , .g = 100 , .b = 65 ,.a = 255} ;
 TTF_Font *ConsolaFont;
 
-void DrawPieceInside(SDL_Rect & dest ,int x ,int y){
-    char text_buff[1024];
-    sprintf(text_buff,"%c",'p');
-    SDL_Surface* textSurface = TTF_RenderText_Solid( ConsolaFont, text_buff, (SDL_Color){0, 0, 255,255} );
-    SDL_Texture* text_texture = SDL_CreateTextureFromSurface( renderer, textSurface );
-    SDL_FreeSurface(textSurface);
-    // Get texture width and height
-    // int textWidth, textHeight;
+void DrawPieceInside (SDL_Rect & dest, int x, int y) {
+    SDL_Rect rect;
+    
+    Piece curr_piece = board->squares[x][y];
+    if (!curr_piece) return;
 
-    SDL_RenderCopy( renderer, text_texture, NULL ,&dest);
-    // printf("dist .x = % 4d , .y = % 4d , .w = % 4d ,h = % 4d \n" , dest.x,dest.y,dest.w,dest.h);
+    int offset_y = IsWhite(curr_piece)? 0 : 334;
+    int offset_x = (RawPiece(curr_piece) - 1) * 334;
 
+    rect.x = offset_x;
+    rect.y = offset_y;
+    rect.w = 333;
+    rect.h = 333;
+
+    SDL_RenderCopy(renderer, pieces_png, &rect, &dest);
 }
 
-void DrawChessSquare(SDL_Color Color , int x /*From 0 to 7*/, int y /*From 0 to 7*/){
+void DrawChessSquare (SDL_Color Color, int rank /*From 0 to 7*/, int file /*From 0 to 7*/){
     SDL_Rect SquareRect;
     SquareRect.w = BoardRect.w / 8;
     SquareRect.h = BoardRect.h / 8;
-    SquareRect.x = BoardRect.x + x * SquareRect.w;
-    SquareRect.y = BoardRect.y + y * SquareRect.h;
+    SquareRect.y = BoardRect.y + rank * SquareRect.h;
+    SquareRect.x = BoardRect.x + file * SquareRect.w;
 
-    // SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_SetRenderDrawColor(renderer, Color.r, Color.g, Color.b, Color.a);
     SDL_RenderFillRect(renderer, &SquareRect);
-    DrawPieceInside(SquareRect , x,y);
+    DrawPieceInside(SquareRect, rank, file);
 
 }
 
-void RenderBoard(){
+void RenderBoard () {
     bool IsSquareWhite = true;
 
-    for (int i = 0; i < 8; ++i)
+    for (int rank = 0; rank < 8; ++rank)
     {
-        for (int j = 0; j < 8; ++j)
+        for (int file = 0; file < 8; ++file)
         {
-            DrawChessSquare((IsSquareWhite)? WhiteSquareColor:BlackSquareColor , j , i);
+            DrawChessSquare((IsSquareWhite)? WhiteSquareColor:BlackSquareColor, rank, file);
             IsSquareWhite = !IsSquareWhite;
         }
         IsSquareWhite = !IsSquareWhite;
@@ -69,7 +79,18 @@ void GUI () {
     SDL_RenderPresent(renderer);
 }
 
-void Init () {
+void InitTextures () {
+    pieces_png = IMG_LoadTexture(renderer, "assets/pieces.png");
+
+    if (!pieces_png) {
+        fprintf(stderr, "can not load image");
+        exit(-1);
+    }
+}
+
+void Init (Board* _board) {
+    board = _board;
+
     if((SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO)==-1)) { 
         fprintf(stderr, "Could not initialize SDL: %s.\n", SDL_GetError());
         exit(-1);
@@ -124,13 +145,7 @@ void Init () {
         exit(-1);
     }
 
-    pieces_png = IMG_LoadTexture(renderer, "src/assets/pieces.png");
-
-    if (!pieces_png) {
-        fprintf(stderr, "a7a yasta");
-        exit(-1);
-    }
-    //InitTextures();
+    InitTextures();
 }
 
 void Shutdown () {

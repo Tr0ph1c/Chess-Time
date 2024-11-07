@@ -3,3 +3,6 @@ FILES = ./src/board.cpp ./src/main.cpp
 
 main: $(FILES)
 	g++ -g -Wall -o chesstime -I./include/ -L./lib/ $(FILES) $(LIBS)
+
+run: main
+	chesstime
