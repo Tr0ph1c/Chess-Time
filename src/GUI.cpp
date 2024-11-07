@@ -21,8 +21,9 @@ SDL_Texture* pieces_png;
 
 // board
 SDL_Rect  BoardRect;
-SDL_Color WhiteSquareColor = {.r = 255 , .g = 180 , .b = 100 ,.a = 255} ;
-SDL_Color BlackSquareColor = {.r = 150 , .g = 100 , .b = 65 ,.a = 255} ;
+SDL_Color WhiteSquareColor = {.r = 255 , .g = 180 , .b = 100 ,.a = 255};
+SDL_Color BlackSquareColor = {.r = 150 , .g = 100 , .b = 65 ,.a = 255};
+SDL_Color HighlightColor = {.r = 255 , .g = 255 , .b = 0 ,.a = 90};
 TTF_Font *ConsolaFont;
 
 void DrawPieceInside (SDL_Rect & dest, int x, int y) {
@@ -51,8 +52,13 @@ void DrawChessSquare (SDL_Color Color, int rank /*From 0 to 7*/, int file /*From
 
     SDL_SetRenderDrawColor(renderer, Color.r, Color.g, Color.b, Color.a);
     SDL_RenderFillRect(renderer, &SquareRect);
-    DrawPieceInside(SquareRect, rank, file);
 
+    if (rank == board->selected_square.first && file == board->selected_square.second) {
+        SDL_SetRenderDrawColor(renderer, HighlightColor.r, HighlightColor.g, HighlightColor.b, HighlightColor.a);
+        SDL_RenderFillRect(renderer, &SquareRect);
+    }
+    
+    DrawPieceInside(SquareRect, rank, file);
 }
 
 void RenderBoard () {
@@ -141,6 +147,8 @@ void Init (Board* _board) {
         fprintf(stderr, "Could not create renderer: %s\n", SDL_GetError());
         exit(-1);
     }
+
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     if (IMG_Init(IMG_INIT_PNG) < 0) {
         fprintf(stderr, "Error initializing SDL_IMG: %s\n", IMG_GetError());

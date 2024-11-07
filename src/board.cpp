@@ -4,80 +4,82 @@
 
 const char* START_POS = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
+using namespace Pieces;
+
 // Piece
 
-Pieces::Piece Pieces::CharToPiece (char c) {
+Piece Pieces::CharToPiece (char c) {
     switch (c) {
         case 'K':
-            return Pieces::W_KING;
+            return W_KING;
         case 'Q':
-            return Pieces::W_QUEEN;
+            return W_QUEEN;
         case 'B':
-            return Pieces::W_BISHOP;
+            return W_BISHOP;
         case 'N':
-            return Pieces::W_KNIGHT;
+            return W_KNIGHT;
         case 'R':
-            return Pieces::W_ROOK;
+            return W_ROOK;
         case 'P':
-            return Pieces::W_PAWN;
+            return W_PAWN;
         case 'k':
-            return Pieces::B_KING;
+            return B_KING;
         case 'q':
-            return Pieces::B_QUEEN;
+            return B_QUEEN;
         case 'b':
-            return Pieces::B_BISHOP;
+            return B_BISHOP;
         case 'n':
-            return Pieces::B_KNIGHT;
+            return B_KNIGHT;
         case 'r':
-            return Pieces::B_ROOK;
+            return B_ROOK;
         case 'p':
-            return Pieces::B_PAWN;
+            return B_PAWN;
         default:
-            return Pieces::UNKNOWN;
+            return UNKNOWN;
     };
 }
 
-char Pieces::PieceToChar (Pieces::Piece p) {
+char Pieces::PieceToChar (Piece p) {
     switch (p) {
-        case Pieces::W_KING:
+        case W_KING:
             return 'K';
-        case Pieces::W_QUEEN:
+        case W_QUEEN:
             return 'Q';
-        case Pieces::W_BISHOP:
+        case W_BISHOP:
             return 'B';
-        case Pieces::W_KNIGHT:
+        case W_KNIGHT:
             return 'N';
-        case Pieces::W_ROOK:
+        case W_ROOK:
             return 'R';
-        case Pieces::W_PAWN:
+        case W_PAWN:
             return 'P';
-        case Pieces::B_KING:
+        case B_KING:
             return 'k';
-        case Pieces::B_QUEEN:
+        case B_QUEEN:
             return 'q';
-        case Pieces::B_BISHOP:
+        case B_BISHOP:
             return 'b';
-        case Pieces::B_KNIGHT:
+        case B_KNIGHT:
             return 'n';
-        case Pieces::B_ROOK:
+        case B_ROOK:
             return 'r';
-        case Pieces::B_PAWN:
+        case B_PAWN:
             return 'p';
         default:
             return '?';
     };
 }
 
-bool Pieces::IsWhite (Pieces::Piece p) {
-    return Pieces::WHITE & p;
+bool Pieces::IsWhite (Piece p) {
+    return WHITE & p;
 }
 
-bool Pieces::IsBlack (Pieces::Piece p) {
-    return Pieces::BLACK & p;
+bool Pieces::IsBlack (Piece p) {
+    return BLACK & p;
 }
 
-Pieces::Piece Pieces::RawPiece (Pieces::Piece p) {
-    return static_cast<Pieces::Piece>(0x00FF & p);
+Piece Pieces::RawPiece (Piece p) {
+    return static_cast<Piece>(0x00FF & p);
 }
 
 // Board
@@ -85,7 +87,7 @@ Pieces::Piece Pieces::RawPiece (Pieces::Piece p) {
 void Board::PrintBoard () {
     for (int rank = 0; rank < BL; ++rank) {
         for (int file = 0; file < BL; ++file) {
-            std::cout << '[' << Pieces::PieceToChar(squares[rank][file]) << ']';
+            std::cout << '[' << PieceToChar(squares[rank][file]) << ']';
         }
         std::cout << std::endl;
     }
@@ -104,7 +106,7 @@ void Board::FillBoard (const char* FEN) {
         } else if (isdigit(c)) {
             file += c - '0'; // from char to int
         } else {
-            squares[rank][file] = Pieces::CharToPiece(c);
+            squares[rank][file] = CharToPiece(c);
             file++;
         }
     }
@@ -112,4 +114,49 @@ void Board::FillBoard (const char* FEN) {
 
 void Board::RestartBoard () {
     FillBoard(START_POS);
+}
+
+bool Board::IsWhiteToPlay () {
+    return color_to_play == WHITE;
+}
+
+bool Board::IsEnemyPiece (Piece p) {
+    return !(p & color_to_play);
+}
+
+bool Board::IsAllyPiece (Piece p) {
+    return p & color_to_play;
+}
+
+void Board::EndTurn () {
+    // stop clock
+    color_to_play = (color_to_play==WHITE)? BLACK : WHITE;
+}
+
+void Board::Click (int x, int y) {
+    int rank = y / 86;
+    int file = x / 86;
+    Piece _selected = squares[rank][file];
+
+    if (IsSelected()) {
+        if (true /* ValidMove(rank, file) */) {
+            Piece selected = squares[selected_square.first][selected_square.second];
+            squares[selected_square.first][selected_square.second] = EMPTY;
+            squares[rank][file] = selected;
+            Deselect();
+            EndTurn();
+        } else {
+            Deselect();
+        }
+    } else if (IsAllyPiece(_selected)) {
+        selected_square = {rank, file};
+    }
+}
+
+bool Board::IsSelected () {
+    return selected_square.first != -1;
+}
+
+void Board::Deselect () {
+    selected_square.first = -1;
 }

@@ -40,10 +40,19 @@ Piece RawPiece    (Piece p);
 class Board {
     public:
     Pieces::Piece squares[BL][BL] = {Pieces::EMPTY};
+    std::pair<int, int> selected_square = {-1, -1};
+    Pieces::Piece color_to_play = Pieces::WHITE;
 
     void PrintBoard ();
-
     void FillBoard (const char* FEN);
-
     void RestartBoard ();
+    
+    bool IsWhiteToPlay ();
+    bool IsEnemyPiece (Pieces::Piece p);
+    bool IsAllyPiece (Pieces::Piece p);
+    void EndTurn ();
+    
+    void Click (int x, int y);
+    bool IsSelected ();
+    void Deselect ();
 };

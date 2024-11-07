@@ -20,6 +20,9 @@ void HandleEvents () {
         case SDL_QUIT:
             running = false;
             break;
+        case SDL_MOUSEBUTTONDOWN:
+            board.Click(event.button.x, event.button.y);
+            break;
         default:
             break;
     }
