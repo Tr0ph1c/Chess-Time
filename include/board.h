@@ -8,9 +8,12 @@ class Piece {
     public:
     char notation;
     bool white;
-    //SDL_image image
 
     Piece (char _notation);
+};
+
+class Pawn : public Piece {
+    // cool stuff
 };
 
 class Slot {

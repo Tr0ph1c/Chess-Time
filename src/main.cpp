@@ -4,6 +4,10 @@
 #include "board.h"
 #include "GUI.cpp"
 
+const int framerate = 30;
+const int target_delta = 1000 / framerate;
+Uint32 start_frame;
+int frame_delta;
 
 Board board;
 bool running = true;
@@ -25,9 +29,14 @@ void Start () {
     board.RestartBoard();
     
     while (running) {
+        start_frame = SDL_GetTicks();
+
         HandleEvents();
         // take turns moving pieces
         GUI::GUI();
+
+        frame_delta = SDL_GetTicks();
+        if (frame_delta < target_delta) SDL_Delay(target_delta - frame_delta);
     }
 }
 

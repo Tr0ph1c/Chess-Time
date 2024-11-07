@@ -1,4 +1,4 @@
-LIBS = -lmingw32 -lSDL2main -lSDL2
+LIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image
 FILES = ./src/board.cpp ./src/main.cpp
 
 main: $(FILES)

@@ -1,4 +1,5 @@
 #include "SDL2/SDL.h"
+#include "SDL2/SDL_image.h"
 
 #define WINDOW_W 800
 #define WINDOW_H 800
@@ -7,9 +8,20 @@ namespace GUI {
 
 SDL_Window*  window;
 SDL_Renderer* renderer;
+SDL_Texture* pieces_png;
 
 void GUI () {
-    SDL_Delay(3000);
+    SDL_SetRenderDrawColor(renderer, 20, 50, 20, 255);
+
+    SDL_RenderClear(renderer);
+    
+    SDL_RenderCopy(renderer, pieces_png, NULL, NULL);
+
+    SDL_RenderPresent(renderer);
+}
+
+void InitTextures () {
+    pieces_png = IMG_LoadTexture(renderer, "assets/pieces.png");
 }
 
 void Init () {
@@ -41,10 +53,23 @@ void Init () {
         exit(-1);
     }
 
-    GUI();
+    if (IMG_Init(IMG_INIT_PNG) < 0) {
+        fprintf(stderr, "Error initializing SDL_IMG: %s\n", IMG_GetError());
+        exit(-1);
+    }
+
+    pieces_png = IMG_LoadTexture(renderer, "src/assets/pieces.png");
+
+    if (!pieces_png) {
+        fprintf(stderr, "a7a yasta");
+        exit(-1);
+    }
+    //InitTextures();
 }
 
 void Shutdown () {
+    IMG_Quit();
+    SDL_DestroyTexture(pieces_png);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
