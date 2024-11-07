@@ -1,6 +1,5 @@
 #include "board.h"
 #include <iostream>
-#include <unordered_map>
 
 const char* START_POS = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -133,9 +132,7 @@ void Board::EndTurn () {
     color_to_play = (color_to_play==WHITE)? BLACK : WHITE;
 }
 
-void Board::Click (int x, int y) {
-    int rank = y / 86;
-    int file = x / 86;
+void Board::Click (int rank, int file) {
     Piece _selected = squares[rank][file];
 
     if (IsSelected()) {

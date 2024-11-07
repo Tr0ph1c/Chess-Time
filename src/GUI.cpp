@@ -57,7 +57,7 @@ void DrawChessSquare (SDL_Color Color, int rank /*From 0 to 7*/, int file /*From
         SDL_SetRenderDrawColor(renderer, HighlightColor.r, HighlightColor.g, HighlightColor.b, HighlightColor.a);
         SDL_RenderFillRect(renderer, &SquareRect);
     }
-    
+
     DrawPieceInside(SquareRect, rank, file);
 }
 
@@ -74,8 +74,13 @@ void RenderBoard () {
         IsSquareWhite = !IsSquareWhite;
         
     }
-    
+}
 
+void Click (int x, int y) {
+    int rank = y / (WINDOW_H / 8);
+    int file = x / (WINDOW_W / 8);
+
+    board->Click(rank, file);
 }
 
 void GUI () {
@@ -139,9 +144,6 @@ void Init (Board* _board) {
     BoardRect.h = WINDOW_H;
     BoardRect.x = 0;
     BoardRect.y = 0;
-    // squares = _squares;
-
-    
 
     if (renderer == NULL) {
         fprintf(stderr, "Could not create renderer: %s\n", SDL_GetError());

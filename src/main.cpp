@@ -21,7 +21,7 @@ void HandleEvents () {
             running = false;
             break;
         case SDL_MOUSEBUTTONDOWN:
-            board.Click(event.button.x, event.button.y);
+            GUI::Click(event.button.x, event.button.y);
             break;
         default:
             break;
