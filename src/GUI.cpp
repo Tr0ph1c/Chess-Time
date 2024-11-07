@@ -6,8 +6,8 @@
 
 #include <iostream>
 
-#define WINDOW_W 750
-#define WINDOW_H 750
+#define WINDOW_W 700
+#define WINDOW_H 700
 
 using namespace Pieces;
 
@@ -31,13 +31,13 @@ void DrawPieceInside (SDL_Rect & dest, int x, int y) {
     Piece curr_piece = board->squares[x][y];
     if (!curr_piece) return;
 
-    int offset_y = IsWhite(curr_piece)? 0 : 334;
-    int offset_x = (RawPiece(curr_piece) - 1) * 334;
+    int offset_y = IsWhite(curr_piece)? 0 : 88;
+    int offset_x = (RawPiece(curr_piece) - 1) * 88;
 
     rect.x = offset_x;
     rect.y = offset_y;
-    rect.w = 333;
-    rect.h = 333;
+    rect.w = 87;
+    rect.h = 87;
 
     SDL_RenderCopy(renderer, pieces_png, &rect, &dest);
 }
@@ -80,7 +80,9 @@ void GUI () {
 }
 
 void InitTextures () {
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
     pieces_png = IMG_LoadTexture(renderer, "assets/pieces.png");
+    SDL_SetTextureScaleMode(pieces_png, SDL_ScaleModeBest);
 
     if (!pieces_png) {
         fprintf(stderr, "can not load image");
