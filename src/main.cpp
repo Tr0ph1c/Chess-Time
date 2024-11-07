@@ -19,7 +19,6 @@ void HandleEvents () {
     switch (event.type) {
         case SDL_QUIT:
             running = false;
-            GUI::Shutdown();
             break;
         default:
             break;
