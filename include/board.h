@@ -57,9 +57,11 @@ class Board {
     
     bool IsWhiteToPlay ();
     bool IsEnemyPiece (Pieces::Piece p);
-    bool IsAllyPiece (Pieces::Piece p);
+    bool IsAllyPiece  (Pieces::Piece p);
     void EndTurn ();
 
+    void GeneratePawnMoves  (int, std::vector<int>*);
+    void GenerateKingMoves  (int, std::vector<int>*);
     void GenerateHorseMoves (int, std::vector<int>*);
     void GenerateSlidingMoves (Pieces::Piece, int, std::vector<int>*);
     void GenerateMovesForSquare (int start_square);

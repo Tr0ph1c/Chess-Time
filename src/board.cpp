@@ -155,8 +155,22 @@ bool Board::IsAllyPiece (Piece p) {
 
 void Board::EndTurn () {
     // stop clock
-    color_to_play = (color_to_play==WHITE)? BLACK : WHITE;
+    color_to_play = (color_to_play == WHITE)? BLACK : WHITE;
     GenerateAllMoves();
+}
+
+void Board::GeneratePawnMoves (int start_square, std::vector<int>* moves) {
+    return;
+}
+
+void Board::GenerateKingMoves (int start_square, std::vector<int>* moves) {
+    for (int dir = 0; dir < 8; ++dir) {
+        int target_square = start_square + directions[dir];
+        if (target_square < 0 || target_square > 63) continue;
+        if (IsAllyPiece(squares[target_square])) continue;
+        // if the square is attacked skip too
+        moves->push_back(target_square);
+    }
 }
 
 void Board::GenerateHorseMoves (int start_square, std::vector<int>* moves) {
@@ -201,12 +215,17 @@ void Board::GenerateMovesForSquare (int start_square) {
     moves->clear();
 
     Piece _piece = squares[start_square];
+    Piece _raw   = RawPiece(_piece);
 
     if (IsAllyPiece(_piece)) {
         if (IsSlidingPiece(_piece)) {
             GenerateSlidingMoves(_piece, start_square, moves);
-        } else if (RawPiece(_piece) == KNIGHT) {
+        } else if (_raw == KNIGHT) {
             GenerateHorseMoves(start_square, moves);
+        } else if (_raw == KING) {
+            GenerateKingMoves(start_square, moves);
+        } else if (_raw == PAWN) {
+            //GeneratePawnMoves(start_square, moves);
         }
     }
 }
