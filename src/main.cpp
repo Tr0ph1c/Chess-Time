@@ -36,7 +36,6 @@ void Start () {
         start_frame = SDL_GetTicks();
 
         HandleEvents();
-        // take turns moving pieces
         GUI::GUI();
 
         frame_delta = SDL_GetTicks();

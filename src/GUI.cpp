@@ -26,6 +26,8 @@ SDL_Color BlackSquareColor = {.r = 150 , .g = 100 , .b = 65 ,.a = 255};
 SDL_Color HighlightColor = {.r = 255 , .g = 255 , .b = 0 ,.a = 90};
 TTF_Font *ConsolaFont;
 
+std::vector<int>* possible_moves = nullptr;
+
 void DrawPieceInside (SDL_Rect & dest, int rank, int file) {
     SDL_Rect rect;
     
@@ -71,6 +73,12 @@ void RenderBoard () {
         }
         IsSquareWhite = !IsSquareWhite;
     }
+
+    if (possible_moves) {
+        for (int m : *possible_moves) {
+            DrawChessSquare(HighlightColor, m / 8, m % 8);
+        }
+    }
 }
 
 void Click (int x, int y) {
@@ -78,6 +86,13 @@ void Click (int x, int y) {
     int file = x / (WINDOW_W / 8);
 
     board->Click(rank, file);
+
+    // handles highlighting
+    if (board->IsSelected()) {
+        possible_moves = board->move_set[board->selected_square];
+    } else {
+        possible_moves = nullptr;
+    }
 }
 
 void GUI () {
