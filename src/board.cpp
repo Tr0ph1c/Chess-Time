@@ -2,6 +2,7 @@
 #include <iostream>
 
 const char* START_POS = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+const char* VIENNA_POS = "rnbqkb1r/ppp2ppp/3p1n2/4p3/4PP2/2N5/PPPP2PP/R1BQKBNR w KQkq - 0 4";
 
 using namespace Pieces;
 
@@ -84,35 +85,31 @@ Piece Pieces::RawPiece (Piece p) {
 // Board
 
 void Board::PrintBoard () {
-    for (int rank = 0; rank < BL; ++rank) {
-        for (int file = 0; file < BL; ++file) {
-            std::cout << '[' << PieceToChar(squares[rank][file]) << ']';
-        }
-        std::cout << std::endl;
+    for (int index = 0; index < 64; ++index) {
+        if (!(index % 8)) std::cout << std::endl;
+        std::cout << '[' << PieceToChar(squares[index]) << ']';
     }
 }
 
 void Board::FillBoard (const char* FEN) {
-    int rank = 0;
-    int file = 0;
+    size_t index = 0;
 
     while (char c = *FEN++) {
         if (c == ' ') break; // TEMPORARY SOLUTION
 
         if (c == '/') {
-            rank++;
-            file = 0;
+            continue;
         } else if (isdigit(c)) {
-            file += c - '0'; // from char to int
+            index += c - '0'; // from char to int
         } else {
-            squares[rank][file] = CharToPiece(c);
-            file++;
+            squares[index++] = CharToPiece(c);
         }
     }
 }
 
 void Board::RestartBoard () {
-    FillBoard(START_POS);
+    //FillBoard(START_POS);
+    FillBoard(VIENNA_POS);
 }
 
 bool Board::IsWhiteToPlay () {
@@ -133,27 +130,32 @@ void Board::EndTurn () {
 }
 
 void Board::Click (int rank, int file) {
-    Piece _selected = squares[rank][file];
+    int board_index = Board::NotationToBoardIndex(rank, file);
+    Piece _selected = squares[board_index];
 
     if (IsSelected()) {
-        if (true /* ValidMove(rank, file) */) {
-            Piece selected = squares[selected_square.first][selected_square.second];
-            squares[selected_square.first][selected_square.second] = EMPTY;
-            squares[rank][file] = selected;
+        if (true) {
+            Piece selected = squares[selected_square];
+            squares[selected_square] = EMPTY;
+            squares[board_index] = selected;
             Deselect();
             EndTurn();
         } else {
             Deselect();
         }
     } else if (IsAllyPiece(_selected)) {
-        selected_square = {rank, file};
+        selected_square = board_index;
     }
 }
 
 bool Board::IsSelected () {
-    return selected_square.first != -1;
+    return selected_square != -1;
 }
 
 void Board::Deselect () {
-    selected_square.first = -1;
+    selected_square = -1;
+}
+
+int Board::NotationToBoardIndex (int rank, int file) {
+    return rank * 8 + file;
 }

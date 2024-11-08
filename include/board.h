@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-#define BL 8       // BOARD LENGTH
-
 namespace Pieces {
 enum Piece {
     UNKNOWN = -1,
@@ -39,9 +37,9 @@ Piece RawPiece    (Piece p);
 
 class Board {
     public:
-    Pieces::Piece squares[BL][BL] = {Pieces::EMPTY};
-    std::pair<int, int> selected_square = {-1, -1};
+    Pieces::Piece squares[64] = {Pieces::EMPTY};
     Pieces::Piece color_to_play = Pieces::WHITE;
+    int selected_square = -1;
 
     void PrintBoard ();
     void FillBoard (const char* FEN);
@@ -55,4 +53,6 @@ class Board {
     void Click (int x, int y);
     bool IsSelected ();
     void Deselect ();
+
+    static int NotationToBoardIndex (int rank, int file);
 };

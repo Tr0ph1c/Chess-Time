@@ -26,10 +26,10 @@ SDL_Color BlackSquareColor = {.r = 150 , .g = 100 , .b = 65 ,.a = 255};
 SDL_Color HighlightColor = {.r = 255 , .g = 255 , .b = 0 ,.a = 90};
 TTF_Font *ConsolaFont;
 
-void DrawPieceInside (SDL_Rect & dest, int x, int y) {
+void DrawPieceInside (SDL_Rect & dest, int rank, int file) {
     SDL_Rect rect;
     
-    Piece curr_piece = board->squares[x][y];
+    Piece curr_piece = board->squares[Board::NotationToBoardIndex(rank, file)];
     if (!curr_piece) return;
 
     int offset_y = IsWhite(curr_piece)? 0 : 88;
@@ -43,7 +43,7 @@ void DrawPieceInside (SDL_Rect & dest, int x, int y) {
     SDL_RenderCopy(renderer, pieces_png, &rect, &dest);
 }
 
-void DrawChessSquare (SDL_Color Color, int rank /*From 0 to 7*/, int file /*From 0 to 7*/){
+void DrawChessSquare (SDL_Color Color, int rank /*y-axis*/, int file /*x-axis*/){
     SDL_Rect SquareRect;
     SquareRect.w = BoardRect.w / 8;
     SquareRect.h = BoardRect.h / 8;
@@ -53,7 +53,7 @@ void DrawChessSquare (SDL_Color Color, int rank /*From 0 to 7*/, int file /*From
     SDL_SetRenderDrawColor(renderer, Color.r, Color.g, Color.b, Color.a);
     SDL_RenderFillRect(renderer, &SquareRect);
 
-    if (rank == board->selected_square.first && file == board->selected_square.second) {
+    if (Board::NotationToBoardIndex(rank, file) == board->selected_square) {
         SDL_SetRenderDrawColor(renderer, HighlightColor.r, HighlightColor.g, HighlightColor.b, HighlightColor.a);
         SDL_RenderFillRect(renderer, &SquareRect);
     }
@@ -64,15 +64,12 @@ void DrawChessSquare (SDL_Color Color, int rank /*From 0 to 7*/, int file /*From
 void RenderBoard () {
     bool IsSquareWhite = true;
 
-    for (int rank = 0; rank < 8; ++rank)
-    {
-        for (int file = 0; file < 8; ++file)
-        {
+    for (int rank = 0; rank < 8; ++rank) {
+        for (int file = 0; file < 8; ++file) {
             DrawChessSquare((IsSquareWhite)? WhiteSquareColor:BlackSquareColor, rank, file);
             IsSquareWhite = !IsSquareWhite;
         }
         IsSquareWhite = !IsSquareWhite;
-        
     }
 }
 
@@ -140,8 +137,8 @@ void Init (Board* _board) {
     }
 
     //board
-    BoardRect.w = WINDOW_W;
-    BoardRect.h = WINDOW_H;
+    BoardRect.w = std::min(WINDOW_W, WINDOW_H);
+    BoardRect.h = BoardRect.w;
     BoardRect.x = 0;
     BoardRect.y = 0;
 
