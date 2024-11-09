@@ -28,14 +28,14 @@ enum Piece {
     B_PAWN
 };
 
-Piece CharToPiece (char c );
-char  PieceToChar (Piece p);
-bool  IsWhite     (Piece p);
-bool  IsBlack     (Piece p);
-Piece GetColor    (Piece p);
-Piece RawPiece    (Piece p);
+int CharToPiece (char c );
+char  PieceToChar (int p);
+bool  IsWhite     (int p);
+bool  IsBlack     (int p);
+int GetColor    (int p);
+int RawPiece    (int p);
 
-bool IsSlidingPiece (Piece p);
+bool IsSlidingPiece (int p);
 };
 
 class Board {
@@ -45,10 +45,10 @@ class Board {
     const int directions[8] = {8, -8, 1, -1, 7, -7, 9, -9};
     const int knight_moves[8] = {15, 17, -15, -17, 6, 10, -6, -10};
 
-    Pieces::Piece squares[64] = {Pieces::EMPTY};
+    int squares[64] = {Pieces::EMPTY};
     std::vector<int>* move_set[64];
     int distance_to_edge[64][8];
-    Pieces::Piece color_to_play = Pieces::WHITE;
+    int color_to_play = Pieces::WHITE;
     int selected_square = -1;
 
     void PrintBoard ();
@@ -57,21 +57,21 @@ class Board {
     void InitializeMoveset ();
     
     bool IsWhiteToPlay ();
-    bool IsEnemyPiece (Pieces::Piece p);
-    bool IsAllyPiece  (Pieces::Piece p);
+    bool IsEnemyPiece (int p);
+    bool IsAllyPiece  (int p);
     void EndTurn ();
 
-    void GeneratePawnMoves  (Pieces::Piece,int, std::vector<int>*);
+    void GeneratePawnMoves  (int ,int, std::vector<int>*);
     void GenerateKingMoves  (int, std::vector<int>*);
     void GenerateHorseMoves (int, std::vector<int>*);
-    void GenerateSlidingMoves (Pieces::Piece, int, std::vector<int>*);
+    void GenerateSlidingMoves (int, int, std::vector<int>*);
     void GenerateMovesForSquare (int start_square);
     void GenerateAllMoves ();
     
     void Click (int x, int y);
     bool IsSelected ();
     void Deselect ();
-    void HandlePawnMove(Pieces::Piece ,int NewPos , int OldPos);
+    void HandlePawnMove(int ,int NewPos , int OldPos);
 
     static int NotationToBoardIndex (int rank, int file);
     void PreCalculateDistancesToEdgeOfBoard ();

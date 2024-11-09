@@ -17,7 +17,7 @@ using namespace Pieces;
 
 // Piece
 
-Piece Pieces::CharToPiece (char c) {
+int Pieces::CharToPiece (char c) {
     switch (c) {
         case 'K':
             return W_KING;
@@ -48,7 +48,7 @@ Piece Pieces::CharToPiece (char c) {
     };
 }
 
-char Pieces::PieceToChar (Piece p) {
+char Pieces::PieceToChar (int p) {
     switch (p) {
         case W_KING:
             return 'K';
@@ -79,23 +79,23 @@ char Pieces::PieceToChar (Piece p) {
     };
 }
 
-bool Pieces::IsWhite (Piece p) {
+bool Pieces::IsWhite (int p) {
     return WHITE & p;
 }
 
-bool Pieces::IsBlack (Piece p) {
+bool Pieces::IsBlack (int p) {
     return BLACK & p;
 }
 
-Piece Pieces::GetColor (Piece p) {
-    return static_cast<Piece>(p & 0x0300);
+int Pieces::GetColor (int p) {
+    return p & 0x0300;
 }
 
-Piece Pieces::RawPiece (Piece p) {
-    return static_cast<Piece>(0x00FF & p);
+int Pieces::RawPiece (int p) {
+    return 0x00FF & p;
 }
 
-bool Pieces::IsSlidingPiece (Piece p) {
+bool Pieces::IsSlidingPiece (int p) {
     bool is_sliding = false;
 
     switch (RawPiece(p)) {
@@ -144,7 +144,7 @@ void Board::LoadBoard (const char* FEN) {
 }
 
 void Board::RestartBoard () {
-    //FillBoard(START_POS);
+    //LoadBoard(START_POS);
     LoadBoard(VIENNA_POS);
     InitializeMoveset();
     GenerateAllMoves();
@@ -160,11 +160,11 @@ bool Board::IsWhiteToPlay () {
     return color_to_play == WHITE;
 }
 
-bool Board::IsEnemyPiece (Piece p) {
+bool Board::IsEnemyPiece (int p) {
     return p & (color_to_play ^ 0x0300); // flips the bits of white and black
 }
 
-bool Board::IsAllyPiece (Piece p) { 
+bool Board::IsAllyPiece (int p) { 
     return p & color_to_play;
 }
 
@@ -175,7 +175,7 @@ void Board::EndTurn () {
     GenerateAllMoves();
 }
 
-void Board::GeneratePawnMoves (Piece p,int start_square, std::vector<int>* moves) {
+void Board::GeneratePawnMoves (int p, int start_square, std::vector<int>* moves) {
     short rank = start_square / 8;
     bool is_first_move = (IsWhite(p))? rank == 1 : rank == 6;
     short dir = (IsWhite(p))? 1 : -1;
@@ -233,12 +233,12 @@ void Board::GenerateHorseMoves (int start_square, std::vector<int>* moves) {
     }
 }
 
-void Board::GenerateSlidingMoves (Piece p, int start_square, std::vector<int>* moves) {
+void Board::GenerateSlidingMoves (int p, int start_square, std::vector<int>* moves) {
     //printf("Generated for %c on square %d\n", PieceToChar(p), start_square);
     int diri = 0;
     int diri_max = 8;
 
-    Piece raw_p = RawPiece(p);
+    int raw_p = RawPiece(p);
 
     if (raw_p == ROOK) diri_max = 4;
     else if (raw_p == BISHOP) diri = 4;
@@ -258,8 +258,8 @@ void Board::GenerateMovesForSquare (int start_square) {
     std::vector<int>* moves = move_set[start_square];
     moves->clear();
 
-    Piece _piece = squares[start_square];
-    Piece _raw   = RawPiece(_piece);
+    int _piece = squares[start_square];
+    int _raw   = RawPiece(_piece);
 
     if (IsAllyPiece(_piece)) {
         if (IsSlidingPiece(_piece)) {
@@ -282,13 +282,13 @@ void Board::GenerateAllMoves () {
 
 void Board::Click (int rank, int file) {
     int board_index = Board::NotationToBoardIndex(rank, file);
-    Piece _selected = squares[board_index];
+    int _selected = squares[board_index];
 
     if (IsSelected()) {
         if (IsAllyPiece(_selected)) {
             selected_square = board_index;
         } else if (std::find(move_set[selected_square]->begin(), move_set[selected_square]->end(), board_index) != move_set[selected_square]->end()) {
-            Piece selected = squares[selected_square];
+            int selected = squares[selected_square];
             squares[selected_square] = EMPTY;
             squares[board_index] = selected;
             if (RawPiece(selected) == Piece::PAWN)
@@ -338,7 +338,7 @@ void Board::PreCalculateDistancesToEdgeOfBoard () {
     }
 }
 
-void Board::HandlePawnMove (Piece p, int NewPos, int OldPos) {
+void Board::HandlePawnMove (int p, int NewPos, int OldPos) {
     int dir = (IsWhite(p))? 1 : -1;
 
     if (abs(NewPos/8 - OldPos/8) == 2) {             // create en passant opportunity 
@@ -348,6 +348,6 @@ void Board::HandlePawnMove (Piece p, int NewPos, int OldPos) {
     EnPassant.IsAvailable == half_moves) {           // En Passant
         squares[NewPos + dir*-1 * 8] = Piece::EMPTY;
     } else if (NewPos / 8 == 0 || NewPos / 8 == 7) { // Promotion
-        squares[NewPos] = static_cast<Piece>(QUEEN | GetColor(p));
+        squares[NewPos] = QUEEN | GetColor(p);
     }
 }

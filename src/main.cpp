@@ -1,3 +1,9 @@
+// TODO:
+//       give the player the choice of promotion
+//       add castling
+//       add checks and valid move checking
+
+
 #include <iostream>
 
 #include "SDL2/SDL.h"
@@ -30,7 +36,7 @@ void HandleEvents () {
 
 void Start () {
     board.RestartBoard();
-    
+
     while (running) {
         start_frame = SDL_GetTicks();
 
