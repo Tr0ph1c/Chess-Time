@@ -82,7 +82,7 @@ void RenderBoard () {
 }
 
 void Click (int x, int y) {
-    int rank = y / (WINDOW_H / 8);
+    int rank = abs(y - WINDOW_H) / (WINDOW_H / 8);
     int file = x / (WINDOW_W / 8);
 
     board->Click(rank, file);

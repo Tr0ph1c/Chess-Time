@@ -51,7 +51,7 @@ class Board {
     int selected_square = -1;
 
     void PrintBoard ();
-    void FillBoard (const char* FEN);
+    void LoadBoard (const char* FEN);
     void RestartBoard ();
     void InitializeMoveset ();
     

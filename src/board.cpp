@@ -7,11 +7,11 @@ const char* VIENNA_POS = "rnbqkb1r/ppp2ppp/3p1n2/4p3/4PP2/2N5/PPPP2PP/R1BQKBNR w
 
 
 struct {
-    int IsAvailable = -100;
+    int IsAvailable = -1;
     int place;
 } EnPassant;
 
-int NumberOfMoves = 0;
+int half_moves = 1;
 
 using namespace Pieces;
 
@@ -123,7 +123,7 @@ void Board::PrintBoard () {
     */
 }
 
-void Board::FillBoard (const char* FEN) {
+void Board::LoadBoard (const char* FEN) {
     size_t index = 64 - 8;
 
     while (char c = *FEN++) {
@@ -141,7 +141,7 @@ void Board::FillBoard (const char* FEN) {
 
 void Board::RestartBoard () {
     //FillBoard(START_POS);
-    FillBoard(VIENNA_POS);
+    LoadBoard(VIENNA_POS);
     InitializeMoveset();
     GenerateAllMoves();
 }
@@ -166,41 +166,41 @@ bool Board::IsAllyPiece (Piece p) {
 
 void Board::EndTurn () {
     // stop clock
+    half_moves++;
     color_to_play = (color_to_play == WHITE)? BLACK : WHITE;
     GenerateAllMoves();
 }
 
 void Board::GeneratePawnMoves (Piece p,int start_square, std::vector<int>* moves) {
-    short rank = start_square/8;
-    bool IsFrisrtMove = (IsWhite(p))?rank == 6:rank==1;
-    short dir = (IsWhite(p))?-1:1;
+    short rank = start_square / 8;
+    bool is_first_move = (IsWhite(p))? rank == 1 : rank == 6;
+    short dir = (IsWhite(p))? 1 : -1;
 
-    if(squares[start_square + dir*8] == Piece::EMPTY){
+    if(squares[start_square + dir*8] == Piece::EMPTY) {
         moves->push_back(start_square + dir*8);
-        if (IsFrisrtMove && squares[start_square + dir*16] == Piece::EMPTY)
+        if (is_first_move && squares[start_square + dir*16] == Piece::EMPTY)
             moves->push_back(start_square + dir*16);
     }
 
-    if (IsEnemyPiece(squares[start_square + dir*7]))
-        moves->push_back(start_square + dir*7);
-    if (IsEnemyPiece(squares[start_square + dir*9]))
-        moves->push_back(start_square + dir*9);
+    int first_diagonal = start_square + dir*7;
+    int second_diagonal = start_square + dir*9;
+    if (IsEnemyPiece(squares[first_diagonal]) &&
+    abs(start_square%8 - first_diagonal%8) == 1)
+        moves->push_back(first_diagonal);
+    if (IsEnemyPiece(squares[second_diagonal]) &&
+    abs(start_square%8 - second_diagonal%8) == 1)
+        moves->push_back(second_diagonal);
 
     // en passant
-    if (NumberOfMoves - EnPassant.IsAvailable == 0)
-    {
-        if (start_square + dir*7 == EnPassant.place)
-        {
-            moves->push_back(start_square + dir*7);
-        }else if(start_square + dir*9 == EnPassant.place){
-            moves->push_back(start_square + dir*9);
+    if (half_moves == EnPassant.IsAvailable) {
+        if (first_diagonal == EnPassant.place &&
+        abs(start_square%8 - first_diagonal%8) == 1) {
+            moves->push_back(first_diagonal);
+        } else if(second_diagonal == EnPassant.place &&
+        abs(start_square%8 - second_diagonal%8) == 1) {
+            moves->push_back(second_diagonal);
         }
     }
-    
-    
-    
-    
-    return;
 }
 
 void Board::GenerateKingMoves (int start_square, std::vector<int>* moves) {
@@ -281,16 +281,17 @@ void Board::Click (int rank, int file) {
     Piece _selected = squares[board_index];
 
     if (IsSelected()) {
-        if (std::find(move_set[selected_square]->begin(), move_set[selected_square]->end(), board_index) != move_set[selected_square]->end()) {
+        if (IsAllyPiece(_selected)) {
+            selected_square = board_index;
+        } else if (std::find(move_set[selected_square]->begin(), move_set[selected_square]->end(), board_index) != move_set[selected_square]->end()) {
             Piece selected = squares[selected_square];
             squares[selected_square] = EMPTY;
             squares[board_index] = selected;
             if (RawPiece(selected) == Piece::PAWN)
-                HandlePawnMove(selected,board_index ,selected_square);
+                HandlePawnMove(selected, board_index, selected_square);
             
             Deselect();
             EndTurn();
-            NumberOfMoves++;
         } else {
             Deselect();
         }
@@ -333,21 +334,17 @@ void Board::PreCalculateDistancesToEdgeOfBoard () {
     }
 }
 
-void Board::HandlePawnMove(Piece p,int NewPos , int OldPos){
-    int dir = (IsWhite(p))? -1 : 1;
+void Board::HandlePawnMove (Piece p, int NewPos, int OldPos) {
+    int dir = (IsWhite(p))? 1 : -1;
 
-    if((int)abs(NewPos/8 - OldPos/8) == 2){
-        EnPassant.IsAvailable = NumberOfMoves;
+    if (abs(NewPos/8 - OldPos/8) == 2) {
+        EnPassant.IsAvailable = half_moves + 1;
         EnPassant.place = OldPos + dir*8;
         // std::cout <<"En Passant"<<std::endl; 
         // std::cout <<"IsAvailable,place "<<EnPassant.IsAvailable<<' '<<EnPassant.place<<std::endl; 
     }
-    if ( EnPassant.place == NewPos )
-    {
+
+    if (EnPassant.place == NewPos && EnPassant.IsAvailable == half_moves) {
         squares[NewPos + dir*-1 * 8] = Piece::EMPTY;
     }
-    
-
-
-
 }
