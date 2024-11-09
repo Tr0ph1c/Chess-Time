@@ -341,7 +341,7 @@ void Board::HandlePawnMove(Piece p,int NewPos , int OldPos){
         // std::cout <<"En Passant"<<std::endl; 
         // std::cout <<"IsAvailable,place "<<EnPassant.IsAvailable<<' '<<EnPassant.place<<std::endl; 
     }
-    if ((int)abs(NewPos%8 - OldPos%8) != 0 && NumberOfMoves - EnPassant.IsAvailable == 1)
+    if ( EnPassant.place == NewPos )
     {
         squares[NewPos + dir*-1 * 8] = Piece::EMPTY;
     }
