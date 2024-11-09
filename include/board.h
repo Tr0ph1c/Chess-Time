@@ -32,6 +32,7 @@ Piece CharToPiece (char c );
 char  PieceToChar (Piece p);
 bool  IsWhite     (Piece p);
 bool  IsBlack     (Piece p);
+Piece GetColor    (Piece p);
 Piece RawPiece    (Piece p);
 
 bool IsSlidingPiece (Piece p);

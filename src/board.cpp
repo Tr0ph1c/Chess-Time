@@ -87,6 +87,10 @@ bool Pieces::IsBlack (Piece p) {
     return BLACK & p;
 }
 
+Piece Pieces::GetColor (Piece p) {
+    return static_cast<Piece>(p & 0x0300);
+}
+
 Piece Pieces::RawPiece (Piece p) {
     return static_cast<Piece>(0x00FF & p);
 }
@@ -337,14 +341,13 @@ void Board::PreCalculateDistancesToEdgeOfBoard () {
 void Board::HandlePawnMove (Piece p, int NewPos, int OldPos) {
     int dir = (IsWhite(p))? 1 : -1;
 
-    if (abs(NewPos/8 - OldPos/8) == 2) {
+    if (abs(NewPos/8 - OldPos/8) == 2) {             // create en passant opportunity 
         EnPassant.IsAvailable = half_moves + 1;
         EnPassant.place = OldPos + dir*8;
-        // std::cout <<"En Passant"<<std::endl; 
-        // std::cout <<"IsAvailable,place "<<EnPassant.IsAvailable<<' '<<EnPassant.place<<std::endl; 
-    }
-
-    if (EnPassant.place == NewPos && EnPassant.IsAvailable == half_moves) {
+    } else if (EnPassant.place == NewPos && 
+    EnPassant.IsAvailable == half_moves) {           // En Passant
         squares[NewPos + dir*-1 * 8] = Piece::EMPTY;
+    } else if (NewPos / 8 == 0 || NewPos / 8 == 7) { // Promotion
+        squares[NewPos] = static_cast<Piece>(QUEEN | GetColor(p));
     }
 }
