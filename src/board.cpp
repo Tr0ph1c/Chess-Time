@@ -6,11 +6,10 @@ const char* START_POS = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 
 const char* VIENNA_POS = "rnbqkb1r/ppp2ppp/3p1n2/4p3/4PP2/2N5/PPPP2PP/R1BQKBNR w KQkq - 0 4";
 
 
-struct 
-{
+struct {
     int IsAvailable = -100;
-    int place ;
-}EnPassant;
+    int place;
+} EnPassant;
 
 int NumberOfMoves = 0;
 
@@ -115,22 +114,25 @@ Board::Board () {
 }
 
 void Board::PrintBoard () {
+    /*
+    // DOESN'T WORK AS INTENDED ANYMORE
     for (int index = 0; index < 64; ++index) {
         if (!(index % 8)) std::cout << std::endl;
         std::cout << '[' << PieceToChar(squares[index]) << ']';
     }
+    */
 }
 
 void Board::FillBoard (const char* FEN) {
-    size_t index = 0;
+    size_t index = 64 - 8;
 
     while (char c = *FEN++) {
-        if (c == ' ') break; // TEMPORARY SOLUTION
+        if (c == ' ') break;  // TEMPORARY SOLUTION
 
         if (c == '/') {
-            continue;
+            index -= 16;      // jump back to previous rank
         } else if (isdigit(c)) {
-            index += c - '0'; // from char to int
+            index += c - '0'; // from char to int (jump number of files)
         } else {
             squares[index++] = CharToPiece(c);
         }
@@ -177,10 +179,9 @@ void Board::GeneratePawnMoves (Piece p,int start_square, std::vector<int>* moves
         moves->push_back(start_square + dir*8);
         if (IsFrisrtMove && squares[start_square + dir*16] == Piece::EMPTY)
             moves->push_back(start_square + dir*16);
-        
     }
 
-    if (IsEnemyPiece(squares[start_square + dir*7]) )
+    if (IsEnemyPiece(squares[start_square + dir*7]))
         moves->push_back(start_square + dir*7);
     if (IsEnemyPiece(squares[start_square + dir*9]))
         moves->push_back(start_square + dir*9);

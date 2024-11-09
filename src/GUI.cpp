@@ -49,7 +49,7 @@ void DrawChessSquare (SDL_Color Color, int rank /*y-axis*/, int file /*x-axis*/)
     SDL_Rect SquareRect;
     SquareRect.w = BoardRect.w / 8;
     SquareRect.h = BoardRect.h / 8;
-    SquareRect.y = BoardRect.y + rank * SquareRect.h;
+    SquareRect.y = BoardRect.y + abs(rank - 7) * SquareRect.h;
     SquareRect.x = BoardRect.x + file * SquareRect.w;
 
     SDL_SetRenderDrawColor(renderer, Color.r, Color.g, Color.b, Color.a);
