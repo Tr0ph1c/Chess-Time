@@ -60,7 +60,7 @@ class Board {
     bool IsAllyPiece  (Pieces::Piece p);
     void EndTurn ();
 
-    void GeneratePawnMoves  (int, std::vector<int>*);
+    void GeneratePawnMoves  (Pieces::Piece,int, std::vector<int>*);
     void GenerateKingMoves  (int, std::vector<int>*);
     void GenerateHorseMoves (int, std::vector<int>*);
     void GenerateSlidingMoves (Pieces::Piece, int, std::vector<int>*);
@@ -70,6 +70,7 @@ class Board {
     void Click (int x, int y);
     bool IsSelected ();
     void Deselect ();
+    void HandlePawnMove(Pieces::Piece ,int NewPos , int OldPos);
 
     static int NotationToBoardIndex (int rank, int file);
     void PreCalculateDistancesToEdgeOfBoard ();

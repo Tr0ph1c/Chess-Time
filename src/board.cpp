@@ -5,6 +5,15 @@
 const char* START_POS = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const char* VIENNA_POS = "rnbqkb1r/ppp2ppp/3p1n2/4p3/4PP2/2N5/PPPP2PP/R1BQKBNR w KQkq - 0 4";
 
+
+struct 
+{
+    int IsAvailable = -100;
+    int place ;
+}EnPassant;
+
+int NumberOfMoves = 0;
+
 using namespace Pieces;
 
 // Piece
@@ -149,7 +158,7 @@ bool Board::IsEnemyPiece (Piece p) {
     return p & (color_to_play ^ 0x0300); // flips the bits of white and black
 }
 
-bool Board::IsAllyPiece (Piece p) {
+bool Board::IsAllyPiece (Piece p) { 
     return p & color_to_play;
 }
 
@@ -159,7 +168,37 @@ void Board::EndTurn () {
     GenerateAllMoves();
 }
 
-void Board::GeneratePawnMoves (int start_square, std::vector<int>* moves) {
+void Board::GeneratePawnMoves (Piece p,int start_square, std::vector<int>* moves) {
+    short rank = start_square/8;
+    bool IsFrisrtMove = (IsWhite(p))?rank == 6:rank==1;
+    short dir = (IsWhite(p))?-1:1;
+
+    if(squares[start_square + dir*8] == Piece::EMPTY){
+        moves->push_back(start_square + dir*8);
+        if (IsFrisrtMove)
+            moves->push_back(start_square + dir*16);
+        
+    }
+
+    if (IsEnemyPiece(squares[start_square + dir*7]) )
+        moves->push_back(start_square + dir*7);
+    if (IsEnemyPiece(squares[start_square + dir*9]))
+        moves->push_back(start_square + dir*9);
+
+    // en passant
+    if (NumberOfMoves - EnPassant.IsAvailable == 0)
+    {
+        if (start_square + dir*7 == EnPassant.place)
+        {
+            moves->push_back(start_square + dir*7);
+        }else if(start_square + dir*9 == EnPassant.place){
+            moves->push_back(start_square + dir*9);
+        }
+    }
+    
+    
+    
+    
     return;
 }
 
@@ -225,7 +264,7 @@ void Board::GenerateMovesForSquare (int start_square) {
         } else if (_raw == KING) {
             GenerateKingMoves(start_square, moves);
         } else if (_raw == PAWN) {
-            //GeneratePawnMoves(start_square, moves);
+            GeneratePawnMoves(_piece,start_square, moves);
         }
     }
 }
@@ -245,8 +284,12 @@ void Board::Click (int rank, int file) {
             Piece selected = squares[selected_square];
             squares[selected_square] = EMPTY;
             squares[board_index] = selected;
+            if (RawPiece(selected) == Piece::PAWN)
+                HandlePawnMove(selected,board_index ,selected_square);
+            
             Deselect();
             EndTurn();
+            NumberOfMoves++;
         } else {
             Deselect();
         }
@@ -287,4 +330,23 @@ void Board::PreCalculateDistancesToEdgeOfBoard () {
             dte[7] = std::min(north, west);
         }
     }
+}
+
+void Board::HandlePawnMove(Piece p,int NewPos , int OldPos){
+    int dir = (IsWhite(p))? -1 : 1;
+
+    if((int)abs(NewPos/8 - OldPos/8) == 2){
+        EnPassant.IsAvailable = NumberOfMoves;
+        EnPassant.place = OldPos + dir*8;
+        // std::cout <<"En Passant"<<std::endl; 
+        // std::cout <<"IsAvailable,place "<<EnPassant.IsAvailable<<' '<<EnPassant.place<<std::endl; 
+    }
+    if ((int)abs(NewPos%8 - OldPos%8) != 0 && NumberOfMoves - EnPassant.IsAvailable == 1)
+    {
+        squares[NewPos + dir*-1 * 8] = Piece::EMPTY;
+    }
+    
+
+
+
 }
