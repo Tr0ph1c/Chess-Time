@@ -175,7 +175,7 @@ void Board::GeneratePawnMoves (Piece p,int start_square, std::vector<int>* moves
 
     if(squares[start_square + dir*8] == Piece::EMPTY){
         moves->push_back(start_square + dir*8);
-        if (IsFrisrtMove)
+        if (IsFrisrtMove && squares[start_square + dir*16] == Piece::EMPTY)
             moves->push_back(start_square + dir*16);
         
     }
