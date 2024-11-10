@@ -31,7 +31,7 @@ std::vector<int>* possible_moves = nullptr;
 void DrawPieceInside (SDL_Rect & dest, int rank, int file) {
     SDL_Rect rect;
     
-    Piece curr_piece = board->squares[Board::NotationToBoardIndex(rank, file)];
+    int curr_piece = board->squares[Board::NotationToBoardIndex(rank, file)];
     if (!curr_piece) return;
 
     int offset_y = IsWhite(curr_piece)? 0 : 88;
