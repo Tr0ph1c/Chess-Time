@@ -1,4 +1,4 @@
-#include "board.h"
+#include "board.hpp"
 #include <iostream>
 #include <algorithm>
 
@@ -210,6 +210,24 @@ void Board::GeneratePawnMoves (int p, int start_square, std::vector<int>* moves)
     }
 }
 
+void Board::HandlePawnMove (int p, int new_pos, int old_pos, int promote_to = 0) {
+    int dir = (IsWhite(p))? 1 : -1;
+
+    if (abs(new_pos/8 - old_pos/8) == 2) {             // create en passant opportunity 
+        EnPassant.IsAvailable = half_moves + 1;
+        EnPassant.place = old_pos + dir*8;
+    } else if (EnPassant.place == new_pos && 
+    EnPassant.IsAvailable == half_moves) {             // En Passant
+        squares[new_pos + dir*-1 * 8] = Piece::EMPTY;
+    } else if (new_pos / 8 == 0 || new_pos / 8 == 7) { // Promotion
+        if (!promote_to) {
+            // GUI
+        } else {
+            squares[new_pos] = promote_to | GetColor(p);
+        }
+    }
+}
+
 void Board::GenerateKingMoves (int start_square, std::vector<int>* moves) {
     for (int dir = 0; dir < 8; ++dir) {
         int target_square = start_square + directions[dir];
@@ -336,19 +354,5 @@ void Board::PreCalculateDistancesToEdgeOfBoard () {
             dte[6] = std::min(south, east);
             dte[7] = std::min(north, west);
         }
-    }
-}
-
-void Board::HandlePawnMove (int p, int NewPos, int OldPos) {
-    int dir = (IsWhite(p))? 1 : -1;
-
-    if (abs(NewPos/8 - OldPos/8) == 2) {             // create en passant opportunity 
-        EnPassant.IsAvailable = half_moves + 1;
-        EnPassant.place = OldPos + dir*8;
-    } else if (EnPassant.place == NewPos && 
-    EnPassant.IsAvailable == half_moves) {           // En Passant
-        squares[NewPos + dir*-1 * 8] = Piece::EMPTY;
-    } else if (NewPos / 8 == 0 || NewPos / 8 == 7) { // Promotion
-        squares[NewPos] = QUEEN | GetColor(p);
     }
 }

@@ -4,10 +4,11 @@
 
 namespace Pieces {
 
-// 16-bit representation of a piece
+// 8-bit representation of a piece
 // ===================================
-// 0000  0000   00    00      0       000
-// ----  ----   --   color  mvflag   piece
+// 00    00      0       000
+// --   color  mvflag   piece
+//
 // color : 01 = white, 10 = black
 // mvflag: initial 0, when the piece moves it's set to 1
 // piece : 0 = EMPTY, 1-6 = pieces, 7 = ERR_PIECE
@@ -80,8 +81,8 @@ class Board {
     void Click (int x, int y);
     bool IsSelected ();
     void Deselect ();
-    void HandlePawnMove(int ,int NewPos , int OldPos);
+    void HandlePawnMove(int, int, int, int);
 
-    static int NotationToBoardIndex (int rank, int file);
+    static int NotationToBoardIndex (int, int);
     void PreCalculateDistancesToEdgeOfBoard ();
 };

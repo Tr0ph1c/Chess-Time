@@ -7,7 +7,7 @@
 #include <iostream>
 
 #include "SDL2/SDL.h"
-#include "board.h"
+#include "board.hpp"
 #include "GUI.cpp"
 
 const int framerate = 30;
