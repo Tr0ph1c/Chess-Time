@@ -44,12 +44,15 @@ int Pieces::CharToPiece (char c) {
         case 'p':
             return B_PAWN;
         default:
-            return UNKNOWN;
+            return ERR_PIECE;
     };
 }
 
 char Pieces::PieceToChar (int p) {
-    switch (p) {
+    // extract color and piece from state
+    int _p = GetColor(p) | RawPiece(p);
+
+    switch (_p) {
         case W_KING:
             return 'K';
         case W_QUEEN:
@@ -88,27 +91,26 @@ bool Pieces::IsBlack (int p) {
 }
 
 int Pieces::GetColor (int p) {
-    return p & 0x0300;
+    return p & 0x0030;
 }
 
 int Pieces::RawPiece (int p) {
-    return 0x00FF & p;
+    return 0x0007 & p;
 }
 
 bool Pieces::IsSlidingPiece (int p) {
-    bool is_sliding = false;
-
     switch (RawPiece(p)) {
         case QUEEN:
         case BISHOP:
         case ROOK:
-            is_sliding = true;
-            break;
+            return true;
         default:
-            is_sliding = false;
+            return false;
     }
+}
 
-    return is_sliding;
+bool Pieces::HasMoved (int p) {
+    return 0x0008 & p;
 }
 
 // Board
@@ -117,6 +119,7 @@ Board::Board () {
     PreCalculateDistancesToEdgeOfBoard();
 }
 
+// TODO: convert current position to FEN string
 void Board::PrintBoard () {
     /*
     // DOESN'T WORK AS INTENDED ANYMORE
@@ -161,7 +164,7 @@ bool Board::IsWhiteToPlay () {
 }
 
 bool Board::IsEnemyPiece (int p) {
-    return p & (color_to_play ^ 0x0300); // flips the bits of white and black
+    return p & (color_to_play ^ 0x0030); // flips the bits of white and black
 }
 
 bool Board::IsAllyPiece (int p) { 
@@ -234,7 +237,6 @@ void Board::GenerateHorseMoves (int start_square, std::vector<int>* moves) {
 }
 
 void Board::GenerateSlidingMoves (int p, int start_square, std::vector<int>* moves) {
-    //printf("Generated for %c on square %d\n", PieceToChar(p), start_square);
     int diri = 0;
     int diri_max = 8;
 
@@ -248,7 +250,6 @@ void Board::GenerateSlidingMoves (int p, int start_square, std::vector<int>* mov
             int next_square = start_square + (directions[diri] * (i + 1));
             if (IsAllyPiece(squares[next_square])) break;
             moves->push_back(next_square);
-            //printf("%d %d\n", next_square / 8, next_square % 8);
             if (IsEnemyPiece(squares[next_square])) break;
         }
     }

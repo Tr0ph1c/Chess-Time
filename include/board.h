@@ -3,11 +3,20 @@
 #include <vector>
 
 namespace Pieces {
+
+// 16-bit representation of a piece
+// ===================================
+// 0000  0000   00    00      0       000
+// ----  ----   --   color  mvflag   piece
+// color : 01 = white, 10 = black
+// mvflag: initial 0, when the piece moves it's set to 1
+// piece : 0 = EMPTY, 1-6 = pieces, 7 = ERR_PIECE
+
 enum Piece {
-    UNKNOWN = -1,
+    ERR_PIECE = 0x0007,
     EMPTY = 0,
-    WHITE = 0x0100,
-    BLACK = 0x0200,
+    WHITE = 0x0010,
+    BLACK = 0x0020,
     KING = 1  ,
     QUEEN     ,
     BISHOP    ,
@@ -28,14 +37,14 @@ enum Piece {
     B_PAWN
 };
 
-int CharToPiece (char c );
+int   CharToPiece (char c);
 char  PieceToChar (int p);
 bool  IsWhite     (int p);
 bool  IsBlack     (int p);
-int GetColor    (int p);
-int RawPiece    (int p);
-
-bool IsSlidingPiece (int p);
+int   GetColor    (int p);
+int   RawPiece    (int p);
+bool  IsSlidingPiece (int p);
+bool  HasMoved    (int p);
 };
 
 class Board {
