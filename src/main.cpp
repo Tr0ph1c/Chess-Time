@@ -36,6 +36,7 @@ void HandleEvents () {
 
 void Start () {
     board.RestartBoard();
+    GUI::FillHighlightMatrix();
 
     while (running) {
         start_frame = SDL_GetTicks();

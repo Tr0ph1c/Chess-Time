@@ -5,6 +5,7 @@
 #include "SDL2/SDL_ttf.h"
 
 #include <iostream>
+#include <algorithm>
 
 #define WINDOW_W 700
 #define WINDOW_H 700
@@ -24,7 +25,27 @@ SDL_Color BlackSquareColor = {.r = 150 , .g = 100 , .b = 65 ,.a = 255};
 SDL_Color HighlightColor = {.r = 255 , .g = 255 , .b = 0 ,.a = 90};
 TTF_Font *ConsolaFont;
 
-std::vector<int>* possible_moves = nullptr;
+class PosMove {
+    public:
+    int position;
+    int index;
+
+    PosMove (int _ind, int _pos) {
+        position = _pos;
+        index = _ind;
+    }
+
+    bool operator == (const int _pm) {
+        return _pm == position;
+    }
+};
+
+std::vector<Move>* move_set = nullptr;
+std::vector<PosMove>* highlight_matrix[64];
+int selected_square = -1;
+
+// TODO: make GUI.hpp
+bool IsSelected();
 
 void DrawPieceInside (SDL_Rect & dest, int rank, int file) {
     SDL_Rect rect;
@@ -72,24 +93,67 @@ void RenderBoard () {
         IsSquareWhite = !IsSquareWhite;
     }
 
-    if (possible_moves) {
-        for (int m : *possible_moves) {
-            DrawChessSquare(HighlightColor, m / 8, m % 8);
+    if (IsSelected()) {
+        for (PosMove m : *highlight_matrix[selected_square]) {
+            DrawChessSquare(HighlightColor, m.position / 8, m.position % 8);
         }
     }
+}
+
+void InitializeHighlightMatrix () {
+    for (int i = 0; i < 64; ++i) {
+        highlight_matrix[i] = new std::vector<PosMove>;
+    }
+}
+
+void FillHighlightMatrix () {
+    for (int i = 0; i < 64; ++i) {
+        highlight_matrix[i]->clear();
+    }
+
+    for (int i = 0; i < static_cast<int>(move_set->size()); ++i) {
+        int square_to_fill = GetStartPos(move_set->at(i));
+        PosMove pm(i, GetFinalPos(move_set->at(i)));
+        highlight_matrix[square_to_fill]->push_back(pm);
+    }
+}
+
+bool IsSelected () {
+    return selected_square != -1;
+}
+
+void Deselect () {
+    selected_square = -1;
+}
+
+void Select (int square) {
+    selected_square = square;
 }
 
 void Click (int x, int y) {
     int rank = abs(y - WINDOW_H) / (WINDOW_H / 8);
     int file = x / (WINDOW_W / 8);
 
-    board->Click(rank, file);
+    // board click
+    int board_index = Board::NotationToBoardIndex(rank, file);
+    int clicked = board->squares[board_index];
 
-    // handles highlighting
-    if (board->IsSelected()) {
-        possible_moves = board->move_set[board->selected_square];
-    } else {
-        possible_moves = nullptr;
+    if (IsSelected()) {
+        if (board->IsAllyPiece(clicked)) {
+            Select(board_index);
+        } else {
+            auto move_to_execute = std::find(highlight_matrix[selected_square]->begin(), highlight_matrix[selected_square]->end(), board_index);
+            if (move_to_execute != highlight_matrix[selected_square]->end()) {
+                board->ExecuteMove(move_set->at(move_to_execute->index));
+                FillHighlightMatrix();
+                Deselect();
+            } else {
+                Deselect();
+                printf("move not possible\n");
+            }
+        }
+    } else if (board->IsAllyPiece(clicked)) {
+        Select(board_index);
     }
 }
 
@@ -113,6 +177,8 @@ void InitTextures () {
 
 void Init (Board* _board) {
     board = _board;
+    move_set = &_board->move_set;
+    InitializeHighlightMatrix();
 
     if((SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO)==-1)) { 
         fprintf(stderr, "Could not initialize SDL: %s.\n", SDL_GetError());

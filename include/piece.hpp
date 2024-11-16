@@ -12,7 +12,7 @@ typedef uint8_t Piece;
 // mvflag: initial 0, when the piece moves it's set to 1
 // piece : 0 = EMPTY, 1-6 = pieces, 7 = ERR_PIECE
 
-enum PIECE_STATE {
+enum SQUARE_STATE {
     COLOR_MASK = 0x30,
     PIECE_MASK = 0x07,
     MOVED      = 0x08,
