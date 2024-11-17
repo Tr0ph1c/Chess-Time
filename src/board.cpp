@@ -1,9 +1,12 @@
 #include "board.hpp"
 #include "piece.hpp"
 #include "move.hpp"
+#include <GameTracker.hpp>
 #include <iostream>
 #include <vector>
 #include <algorithm>
+
+GameTracker *tracker;
 
 const char* START_POS = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const char* VIENNA_POS = "rnbqkb1r/ppp2ppp/3p1n2/4p3/4PP2/2N5/PPPP2PP/R1BQKBNR w KQkq - 0 4";
@@ -50,8 +53,8 @@ void Board::LoadBoard (const char* FEN) {
 }
 
 void Board::RestartBoard () {
-    //LoadBoard(START_POS);
-    LoadBoard(VIENNA_POS);
+    tracker = new GameTracker(this);
+    // LoadBoard(VIENNA_POS);
     GenerateAllMoves();
 }
 
@@ -246,6 +249,8 @@ void Board::ExecuteMove (Move move) {
 
     start_pos = GetStartPos(move);
     final_pos = GetFinalPos(move);
+
+    tracker->NewMove(move,squares[final_pos],NON);
 
     squares[final_pos] = squares[start_pos];
     squares[start_pos] = EMPTY;

@@ -1,5 +1,6 @@
 #pragma once
 #include <iostream>
+#include <cstdint>
 
 typedef uint8_t Piece;
 
