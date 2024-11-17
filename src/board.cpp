@@ -103,23 +103,23 @@ void Board::GeneratePawnMoves (int p, int start_square) {
     if (IsEnemyPiece(squares[first_diagonal]) &&
     abs(start_square%8 - first_diagonal%8) == 1) {
         if (is_next_rank_promo) {
-            move_set.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_QUEEN));
-            move_set.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_BISHOP));
-            move_set.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_KNIGHT));
-            move_set.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_ROOK));
+            move_set.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_QUEEN, PR_CAS, squares[first_diagonal]));
+            move_set.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_BISHOP, PR_CAS, squares[first_diagonal]));
+            move_set.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_KNIGHT, PR_CAS, squares[first_diagonal]));
+            move_set.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_ROOK, PR_CAS, squares[first_diagonal]));
         } else {
-            move_set.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE));
+            move_set.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE, PR_CAS, squares[first_diagonal]));
         }
     }
     if (IsEnemyPiece(squares[second_diagonal]) &&
     abs(start_square%8 - second_diagonal%8) == 1) {
         if (is_next_rank_promo) {
-            move_set.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_QUEEN));
-            move_set.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_BISHOP));
-            move_set.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_KNIGHT));
-            move_set.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_ROOK));
+            move_set.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_QUEEN, PR_CAS, squares[second_diagonal]));
+            move_set.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_BISHOP, PR_CAS, squares[second_diagonal]));
+            move_set.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_KNIGHT, PR_CAS, squares[second_diagonal]));
+            move_set.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_ROOK, PR_CAS, squares[second_diagonal]));
         } else {
-            move_set.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE));
+            move_set.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE, PR_CAS, squares[second_diagonal]));
         }
     }
 
@@ -127,10 +127,10 @@ void Board::GeneratePawnMoves (int p, int start_square) {
     if (half_moves == EnPassant.IsAvailable) {
         if (first_diagonal == EnPassant.place &&
         abs(start_square%8 - first_diagonal%8) == 1) {
-            move_set.push_back(CreateMove(start_square, first_diagonal, EN_PASSANT));
+            move_set.push_back(CreateMove(start_square, first_diagonal, EN_PASSANT, PR_CAS, PAWN));
         } else if(second_diagonal == EnPassant.place &&
         abs(start_square%8 - second_diagonal%8) == 1) {
-            move_set.push_back(CreateMove(start_square, second_diagonal, EN_PASSANT));
+            move_set.push_back(CreateMove(start_square, second_diagonal, EN_PASSANT, PR_CAS, PAWN));
         }
     }
 }
@@ -158,15 +158,16 @@ void Board::GenerateKingMoves (int start_square) {
     for (int dir = 0; dir < 8; ++dir) {
         int next_square = start_square + directions[dir];
         int next_file = next_square % 8;
+        uint8_t change_castle_rights = (color_to_play == WHITE)? 0b0011 : 0b1100;
 
         if (next_square >= 0 && next_square < 64) {
             if (abs(start_file - next_file) < 2) {
                 if (squares[next_square] == EMPTY) {
-                    move_set.push_back(CreateMove(start_square, next_square, QUIET_MOVE));
+                    move_set.push_back(CreateMove(start_square, next_square, QUIET_MOVE, change_castle_rights));
                 } else if (IsAllyPiece(squares[next_square])) {
                     continue;
                 } else if (IsEnemyPiece(squares[next_square])) {
-                    move_set.push_back(CreateMove(start_square, next_square, CAPTURE_MOVE));
+                    move_set.push_back(CreateMove(start_square, next_square, CAPTURE_MOVE, change_castle_rights, squares[next_square]));
                 }
             }   
         }
@@ -187,7 +188,7 @@ void Board::GenerateHorseMoves (int start_square) {
                 } else if (IsAllyPiece(squares[next_square])) {
                     continue;
                 } else if (IsEnemyPiece(squares[next_square])) {
-                    move_set.push_back(CreateMove(start_square, next_square, CAPTURE_MOVE));
+                    move_set.push_back(CreateMove(start_square, next_square, CAPTURE_MOVE, PR_CAS, squares[next_square]));
                 }
             }
         }
@@ -195,6 +196,7 @@ void Board::GenerateHorseMoves (int start_square) {
 }
 
 void Board::GenerateSlidingMoves (int p, int start_square) {
+    // IF ROOK THEN CHANGE CASTLING RIGHTS
     int diri = 0;
     int diri_max = 8;
 
@@ -212,7 +214,7 @@ void Board::GenerateSlidingMoves (int p, int start_square) {
             } else if (IsAllyPiece(squares[next_square])) {
                 break;
             } else if (IsEnemyPiece(squares[next_square])) {
-                move_set.push_back(CreateMove(start_square, next_square, CAPTURE_MOVE));
+                move_set.push_back(CreateMove(start_square, next_square, CAPTURE_MOVE, PR_CAS, squares[next_square]));
                 break;
             }
         }
@@ -250,7 +252,7 @@ void Board::ExecuteMove (Move move) {
     start_pos = GetStartPos(move);
     final_pos = GetFinalPos(move);
 
-    tracker->NewMove(move,squares[final_pos],NON);
+    tracker->NewMove(move,squares[final_pos], NON);
 
     squares[final_pos] = squares[start_pos];
     squares[start_pos] = EMPTY;

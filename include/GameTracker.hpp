@@ -4,6 +4,7 @@
 #include <list>
 #include <string>
 
+// 4 bits KQkq
 
 enum BoardStateFlag{
     NON                      = 0b00000000 , // Nothing
