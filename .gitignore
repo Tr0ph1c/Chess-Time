@@ -4,3 +4,4 @@ lib/
 *.dll
 CMakeLists.txt
 .idea
+.run
