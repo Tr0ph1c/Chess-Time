@@ -33,18 +33,6 @@ bool IsDoublePawn (Move m) {
     return GetFlags(m) == DOUBLE_PAWN;
 }
 
-int GetStartPos (Move m) {
-    return (m >> 6) & 0x003F;
-}
-
-int GetFinalPos (Move m) {
-    return m & 0x003F;
-}
-
-inline int GetFlags (Move m) {
-    return (m >> 12);
-}
-
 Piece GetPromotionPieceFromMove (Move m) {
     switch (GetFlags(m) & 0b0011) {
         case 0:

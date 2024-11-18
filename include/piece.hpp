@@ -6,12 +6,11 @@ typedef uint8_t Piece;
 
 // 8-bit representation of a piece
 // ===================================
-// 00    00      0       000
-// --   color  mvflag   piece
+// 00    00    0    000
+// --   color  -   piece
 //
 // color : 01 = white, 10 = black
-// mvflag: initial 0, when the piece moves it's set to 1
-// piece : 0 = EMPTY, 1-6 = pieces, 7 = ERR_PIECE
+// piece : 0 = EMPTY, 1-6 = pieces
 
 enum SQUARE_STATE {
     COLOR_MASK = 0x30,

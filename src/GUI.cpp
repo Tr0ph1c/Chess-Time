@@ -74,7 +74,7 @@ void DrawChessSquare (SDL_Color Color, int rank /*y-axis*/, int file /*x-axis*/)
     SDL_SetRenderDrawColor(renderer, Color.r, Color.g, Color.b, Color.a);
     SDL_RenderFillRect(renderer, &SquareRect);
 
-    if (Board::NotationToBoardIndex(rank, file) == board->selected_square) {
+    if (Board::NotationToBoardIndex(rank, file) == selected_square) {
         SDL_SetRenderDrawColor(renderer, HighlightColor.r, HighlightColor.g, HighlightColor.b, HighlightColor.a);
         SDL_RenderFillRect(renderer, &SquareRect);
     }

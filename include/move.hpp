@@ -51,15 +51,17 @@ enum MOVE_FLAG {
 
 Move CreateMove   (uint8_t _start, uint8_t _final, uint8_t _flags = QUIET_MOVE, uint8_t _castle_rights = PR_CAS, Piece _captured = EMPTY);
 
-bool IsNormalMove (Move);
-bool IsCapture    (Move);
-bool IsEnPassant  (Move);
-bool IsPromotion  (Move);
-bool IsKSCastle   (Move);
-bool IsQSCastle   (Move);
-bool IsDoublePawn (Move);
-int  GetStartPos  (Move);
-int  GetFinalPos  (Move);
-int  GetFlags     (Move);
+bool IsNormalMove     (Move);
+bool IsCapture        (Move);
+bool IsEnPassant      (Move);
+bool IsPromotion      (Move);
+bool IsKSCastle       (Move);
+bool IsQSCastle       (Move);
+bool IsDoublePawn     (Move);
+
+inline int GetStartPos     (Move m) { return (m >> 6) & 0x3F; }
+inline int GetFinalPos     (Move m) { return m & 0x3F; }
+inline int GetFlags        (Move m) { return (m >> 12) & 0xF; }
+inline int GetCastleRights (Move m) { return (m >> 16) & 0xF; }
 
 Piece GetPromotionPieceFromMove (Move);
