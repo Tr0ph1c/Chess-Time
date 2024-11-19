@@ -2,6 +2,7 @@
 
 #include "piece.hpp"
 #include "move.hpp"
+#include "GameTracker.hpp"
 #include <vector>
 
 class Board {
@@ -32,7 +33,7 @@ class Board {
 
     void PrintBoard ();
     void LoadBoard (const char* FEN);
-    void RestartBoard ();
+    void RestartBoard(GameTracker *_tracker);
     
     inline bool IsWhiteToPlay ();
     inline bool IsEnemyPiece (int p);

@@ -102,8 +102,10 @@ void Board::LoadBoard (const char* FEN) {
     }
 }
 
-void Board::RestartBoard () {
-    tracker = new GameTracker(this, VIENNA_POS);
+
+void Board::RestartBoard(GameTracker *_tracker) {
+    tracker = _tracker;
+    // LoadBoard(VIENNA_POS);
     GenerateAllMoves();
 }
 

@@ -35,6 +35,8 @@ private:
     std::string start_pos; //FEN
     Board *board;
 
+    void ResetTracker();
+
 public:
     GameTracker(Board *board);
     GameTracker(Board *board, std::string FEN);
@@ -55,7 +57,7 @@ public:
     * GoToMove change the board state to MoveNumber state
     * MoveNumber must be an intger value which (MoveNumber >= 0 && MoveNumber < MovesCount)
     */
-    void GoToMove(int MoveNumber);
+    void GoToMove(int move_num);
     bool IsThisLastMove();
     bool IsThisFristMove();
     /*
@@ -63,4 +65,5 @@ public:
     * Pre : This must be the last move played
     */
     void NewMove(Move mv ,Piece taken_piece, BoardStateFlag state_flag);
+    void UndoMove();
 };

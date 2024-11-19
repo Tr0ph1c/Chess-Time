@@ -15,14 +15,11 @@ GameTracker::GameTracker(Board *board , std::string FEN): GameTracker(){
     this->SetFEN(FEN);
 }
 void GameTracker::SetFEN(std::string FEN){
+    ResetTracker();
     start_pos = FEN;
     this->board->LoadBoard(FEN.c_str());
 }
-// void GameTracker::SetFEN(){
-//     std::string FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-//     start_pos = FEN;
-//     this->board->LoadBoard(FEN.c_str());
-// }
+
 
 
 
@@ -51,10 +48,10 @@ void GameTracker::GoToMove(int MoveNumber){
 
 }
 bool GameTracker::IsThisLastMove(){
-    return false;
+    return curr_pos == Moves.rbegin().base();
 }
 bool GameTracker::IsThisFristMove(){
-    return false;
+    return curr_pos == Moves.begin();
 }
 void GameTracker::NewMove(Move mv ,Piece taken_piece, BoardStateFlag state_flag){
     TrackerMove new_tracker_move;
@@ -67,4 +64,12 @@ void GameTracker::NewMove(Move mv ,Piece taken_piece, BoardStateFlag state_flag)
     Moves.push_back(new_tracker_move);
     curr_pos = Moves.end();
     curr_pos--;
+}
+void GameTracker::UndoMove(){
+    Moves.pop_back();
+}
+
+void GameTracker::ResetTracker() {
+    Moves.clear();
+    curr_pos = Moves.end();
 }

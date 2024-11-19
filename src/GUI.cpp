@@ -3,27 +3,38 @@
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 #include "SDL2/SDL_ttf.h"
+#include "Components.cpp"
 
 #include <iostream>
 #include <algorithm>
+#include <unordered_map>
 
-#define WINDOW_W 700
+#define WINDOW_W 1400
 #define WINDOW_H 700
+
+#define BackgroundColor /*r*/22,/*g*/ 21,/*b*/18, /*a*/255
 
 namespace GUI {
 
 Board* board;
+GameTracker *tracker;
 
 SDL_Window*  window;
 SDL_Renderer* renderer;
-SDL_Texture* pieces_png;
+SDL_Texture* pieces_png , *arrow_png;
 
 // board
 SDL_Rect  BoardRect;
+/* old
 SDL_Color WhiteSquareColor = {.r = 255 , .g = 180 , .b = 100 ,.a = 255};
 SDL_Color BlackSquareColor = {.r = 150 , .g = 100 , .b = 65 ,.a = 255};
-SDL_Color HighlightColor = {.r = 255 , .g = 255 , .b = 0 ,.a = 90};
+*/
+SDL_Color WhiteSquareColor = {.r = 240 , .g = 217 , .b = 181 ,.a = 255};
+SDL_Color BlackSquareColor = {.r = 181 , .g = 136 , .b = 99 ,.a = 255};
+
+ SDL_Color HighlightColor = {.r = 255 , .g = 255 , .b = 0 ,.a = 90};
 TTF_Font *ConsolaFont;
+
 
 class PosMove {
     public:
@@ -83,7 +94,7 @@ void DrawChessSquare (SDL_Color Color, int rank /*y-axis*/, int file /*x-axis*/)
 }
 
 void RenderBoard () {
-    bool IsSquareWhite = true;
+    bool IsSquareWhite = false;
 
     for (int rank = 0; rank < 8; ++rank) {
         for (int file = 0; file < 8; ++file) {
@@ -129,10 +140,9 @@ void Deselect () {
 void Select (int square) {
     selected_square = square;
 }
-
-void Click (int x, int y) {
-    int rank = abs(y - WINDOW_H) / (WINDOW_H / 8);
-    int file = x / (WINDOW_W / 8);
+void HandleBoardClick(int x,int y){
+    int rank = abs(y - BoardRect.y - BoardRect.h) / (BoardRect.h / 8);
+    int file = (x - BoardRect.x) / (BoardRect.w / 8);
 
     // board click
     int board_index = Board::NotationToBoardIndex(rank, file);
@@ -155,21 +165,62 @@ void Click (int x, int y) {
     } else if (board->IsAllyPiece(clicked)) {
         Select(board_index);
     }
+
+}
+
+void Click (int x, int y) {
+    if (    x < BoardRect.x ||
+            x > BoardRect.x+BoardRect.w ||
+            y < BoardRect.y ||
+            y > BoardRect.y + BoardRect.h)
+        return;
+    HandleBoardClick(x,y);
+}
+void DrawArrow(int relevant_x ,int relevant_y ,bool is_to_right , SDL_Rect &parent){
+    SDL_Rect dest_rect;
+    dest_rect.x = relevant_x + parent.x      ;
+    dest_rect.y = relevant_y + parent.y      ;
+    dest_rect.h = parent.h                   ;
+    dest_rect.w = dest_rect.h*(194.0f/322.0f);
+
+    (is_to_right)?
+    SDL_RenderCopyEx(renderer, arrow_png, NULL, &dest_rect, 0.0, NULL, SDL_FLIP_NONE):
+    SDL_RenderCopyEx(renderer, arrow_png, NULL, &dest_rect, 0.0, NULL, SDL_FLIP_HORIZONTAL);
+
+}
+
+void RenderBoardRightSide(){
+    SDL_Rect controlles;
+    controlles.x = BoardRect.x + BoardRect.w + 20 ;
+    controlles.y = BoardRect.y + 50               ;
+    controlles.w = 250                            ;
+    controlles.h = 25                             ;
+
+//    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+//    SDL_RenderFillRect(renderer, &controlles);
+
+
+    DrawArrow(0,0,false,controlles);
+
+
 }
 
 void GUI () {
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_SetRenderDrawColor(renderer, BackgroundColor);
     SDL_RenderClear(renderer);
     RenderBoard();
+    RenderBoardRightSide();
     SDL_RenderPresent(renderer);
 }
 
 void InitTextures () {
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
-    pieces_png = IMG_LoadTexture(renderer, "assets/pieces.png");
+    pieces_png = IMG_LoadTexture(renderer, "assets/imgs/pieces.png");
+    arrow_png  = IMG_LoadTexture(renderer, "assets/imgs/arrow.png") ;
     SDL_SetTextureScaleMode(pieces_png, SDL_ScaleModeBest);
+    SDL_SetTextureScaleMode(arrow_png , SDL_ScaleModeBest);
 
-    if (!pieces_png) {
+    if (!pieces_png || ! arrow_png) {
         fprintf(stderr, "can not load image");
         exit(-1);
     }
@@ -218,7 +269,7 @@ void Init (Board* _board) {
     //board
     BoardRect.w = std::min(WINDOW_W, WINDOW_H);
     BoardRect.h = BoardRect.w;
-    BoardRect.x = 0;
+    BoardRect.x = WINDOW_W /2 - BoardRect.w/2;
     BoardRect.y = 0;
 
     if (renderer == NULL) {
@@ -234,12 +285,26 @@ void Init (Board* _board) {
     }
 
     InitTextures();
+
+    //components
+    Components::arrow_png = arrow_png;
+    Components::tracker   = tracker  ;
+    Components::renderer = renderer;
+
+    SDL_Rect controlles;
+    controlles.x = BoardRect.x + BoardRect.w + 20 ;
+    controlles.y = BoardRect.y + 50               ;
+    controlles.w = 250                            ;
+    controlles.h = 25                             ;
+    Components::components.push(new Components::NextBtn(0, 0, &controlles));
+
 }
 
 void Shutdown () {
     IMG_Quit();
     SDL_DestroyTexture(pieces_png);
-    TTF_CloseFont( ConsolaFont ); // segmentation fault
+    SDL_DestroyTexture(arrow_png);
+    TTF_CloseFont( ConsolaFont );
     TTF_Quit();
     
     SDL_DestroyRenderer(renderer);

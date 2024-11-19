@@ -35,7 +35,9 @@ void HandleEvents () {
 }
 
 void Start () {
-    board.RestartBoard();
+    GameTracker *tracker = new GameTracker();
+    GUI::tracker = tracker;
+    board.RestartBoard(tracker);
     GUI::FillHighlightMatrix();
 
     while (running) {
