@@ -6,6 +6,3 @@ all: $(FILES)
 
 run: all
 	chesstime
-
-clean:
-	rm *.o *.exe

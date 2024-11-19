@@ -33,10 +33,9 @@ Piece CharToPiece (char c) {
 }
 
 char PieceToChar (Piece p) {
-    // extract color and piece from state
-    Piece _p = GetColor(p) | RawPiece(p);
-
-    switch (_p) {
+    if (GetColor(p) == 0) p |= WHITE;
+    
+    switch (p) {
         case W_KING:
             return 'K';
         case W_QUEEN:

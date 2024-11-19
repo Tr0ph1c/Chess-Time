@@ -1,6 +1,4 @@
 // TODO:
-//       give the player the choice of promotion
-//       add castling
 //       add checks and valid move checking
 
 
@@ -28,6 +26,10 @@ void HandleEvents () {
             break;
         case SDL_MOUSEBUTTONDOWN:
             GUI::Click(event.button.x, event.button.y);
+            break;
+        case SDL_KEYDOWN:
+            if (event.key.keysym.sym >= SDLK_1 && event.key.keysym.sym <= SDLK_4)
+            GUI::ExecutePromotion(event.key.keysym.sym - SDLK_1);
             break;
         default:
             break;

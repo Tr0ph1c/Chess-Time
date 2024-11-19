@@ -21,18 +21,23 @@ GameTracker *tracker;
 
 SDL_Window*  window;
 SDL_Renderer* renderer;
-SDL_Texture* pieces_png , *arrow_png;
 
-// board
-SDL_Rect  BoardRect;
-/* old
-SDL_Color WhiteSquareColor = {.r = 255 , .g = 180 , .b = 100 ,.a = 255};
-SDL_Color BlackSquareColor = {.r = 150 , .g = 100 , .b = 65 ,.a = 255};
-*/
+// TEXTURES
+SDL_Texture* pieces_png;
+SDL_Texture* arrow_png;
+SDL_Texture* promo_tip_png;
+
+// RECTS
+SDL_Rect BoardRect;
+SDL_Rect promotion_tip;
+SDL_Rect controls;
+
+// COLORS
 SDL_Color WhiteSquareColor = {.r = 240 , .g = 217 , .b = 181 ,.a = 255};
 SDL_Color BlackSquareColor = {.r = 181 , .g = 136 , .b = 99 ,.a = 255};
-
 SDL_Color HighlightColor = {.r = 255 , .g = 255 , .b = 0 ,.a = 90};
+
+// FONTS
 TTF_Font *ConsolaFont;
 
 
@@ -54,6 +59,8 @@ class PosMove {
 std::vector<Move>* move_set = nullptr;
 std::vector<PosMove>* highlight_matrix[64];
 int selected_square = -1;
+bool is_user_promoting = false;
+int promotion_index = 0;
 
 // TODO: make GUI.hpp
 bool IsSelected();
@@ -126,6 +133,7 @@ void FillHighlightMatrix () {
         int square_to_fill = GetStartPos(move_set->at(i));
         PosMove pm(i, GetFinalPos(move_set->at(i)));
         highlight_matrix[square_to_fill]->push_back(pm);
+        if (IsPromotion(move_set->at(i))) i += 3;
     }
 }
 
@@ -139,6 +147,20 @@ void Deselect () {
 
 void Select (int square) {
     selected_square = square;
+}
+
+void ExecutePromotion (int promotion_offset) {
+    if (is_user_promoting) {
+        is_user_promoting = false;
+        board->ExecuteMove(move_set->at(promotion_index + promotion_offset));
+        FillHighlightMatrix();
+        Deselect();
+    }
+}
+
+void GiveUserPromotionChoice (int move_index) {
+    is_user_promoting = true;
+    promotion_index = move_index;
 }
 
 void HandleBoardClick(int x, int y){
@@ -156,7 +178,10 @@ void HandleBoardClick(int x, int y){
             auto move_to_execute = std::find(highlight_matrix[selected_square]->begin(), highlight_matrix[selected_square]->end(), board_index);
 
             if (move_to_execute != highlight_matrix[selected_square]->end()) {
-                // if move_to_execute Promotion -> [selecting gui] -> execute correct move
+                if (IsPromotion(move_set->at(move_to_execute->index))) {
+                    GiveUserPromotionChoice(move_to_execute->index);
+                    return;
+                }
                 board->ExecuteMove(move_set->at(move_to_execute->index));
                 FillHighlightMatrix();
                 Deselect();
@@ -168,10 +193,12 @@ void HandleBoardClick(int x, int y){
     } else if (board->IsAllyPiece(clicked)) {
         Select(board_index);
     }
-
 }
 
 void Click (int x, int y) {
+
+    if (is_user_promoting) return;
+
     if (    x < BoardRect.x ||
             x > BoardRect.x+BoardRect.w ||
             y < BoardRect.y ||
@@ -194,18 +221,12 @@ void DrawArrow(int relevant_x ,int relevant_y ,bool is_to_right , SDL_Rect &pare
 
 }
 
-void RenderBoardRightSide(){
-    SDL_Rect controlles;
-    controlles.x = BoardRect.x + BoardRect.w + 20 ;
-    controlles.y = BoardRect.y + 50               ;
-    controlles.w = 250                            ;
-    controlles.h = 25                             ;
+void RenderBoardRightSide () {
+    DrawArrow(0, 0, false, controls);
+    if (is_user_promoting) SDL_RenderCopy(renderer, promo_tip_png, NULL, &promotion_tip);
 
 //    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 //    SDL_RenderFillRect(renderer, &controlles);
-
-
-    DrawArrow(0,0,false,controlles);
 }
 
 void GUI () {
@@ -216,15 +237,42 @@ void GUI () {
     SDL_RenderPresent(renderer);
 }
 
+void InitRects () {
+    {
+        BoardRect.w = std::min(WINDOW_W, WINDOW_H);
+        BoardRect.h = BoardRect.w;
+        BoardRect.x = WINDOW_W /2 - BoardRect.w/2;
+        BoardRect.y = 0;
+    }
+
+    {
+        promotion_tip.h = 200;
+        promotion_tip.w = 200;
+        promotion_tip.x = BoardRect.x + BoardRect.w + 50;
+        promotion_tip.y = BoardRect.y - (promotion_tip.h / 2) + (BoardRect.h / 2);
+    }
+
+    {
+        controls.x = BoardRect.x + BoardRect.w + 20;
+        controls.y = BoardRect.y + 50;
+        controls.w = 250;
+        controls.h = 25;
+    }
+}
+
 void InitTextures () {
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+
     pieces_png = IMG_LoadTexture(renderer, "assets/imgs/pieces.png");
-    arrow_png  = IMG_LoadTexture(renderer, "assets/imgs/arrow.png") ;
+    arrow_png  = IMG_LoadTexture(renderer, "assets/imgs/arrow.png");
+    promo_tip_png = IMG_LoadTexture(renderer, "assets/imgs/promo_tip.png");
+
     SDL_SetTextureScaleMode(pieces_png, SDL_ScaleModeBest);
     SDL_SetTextureScaleMode(arrow_png , SDL_ScaleModeBest);
+    SDL_SetTextureScaleMode(promo_tip_png , SDL_ScaleModeBest);
 
-    if (!pieces_png || ! arrow_png) {
-        fprintf(stderr, "can not load image");
+    if (!pieces_png || !arrow_png || !promo_tip_png) {
+        fprintf(stderr, "An image could not be loaded.\n");
         exit(-1);
     }
 }
@@ -269,12 +317,6 @@ void Init (Board* _board) {
         exit(-1);
     }
 
-    //board
-    BoardRect.w = std::min(WINDOW_W, WINDOW_H);
-    BoardRect.h = BoardRect.w;
-    BoardRect.x = WINDOW_W /2 - BoardRect.w/2;
-    BoardRect.y = 0;
-
     if (renderer == NULL) {
         fprintf(stderr, "Could not create renderer: %s\n", SDL_GetError());
         exit(-1);
@@ -288,17 +330,12 @@ void Init (Board* _board) {
     }
 
     InitTextures();
+    InitRects();
 
     //components
     Components::arrow_png = arrow_png;
     Components::tracker   = tracker;
     Components::renderer  = renderer;
-
-    SDL_Rect controls;
-    controls.x = BoardRect.x + BoardRect.w + 20 ;
-    controls.y = BoardRect.y + 50               ;
-    controls.w = 250                            ;
-    controls.h = 25                             ;
 
     Components::components.push(new Components::NextBtn(0, 0, &controls));
 }

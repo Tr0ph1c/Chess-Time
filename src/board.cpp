@@ -130,6 +130,10 @@ void Board::GeneratePawnMoves (int p, int start_square) {
 
     if(squares[forward_square] == EMPTY) {
         if (is_next_rank_promo) {
+            // IMPORTANT: This specific order of move generation is very important
+            // and should not be altered in any way shape or form.
+            // This may not be the best way to create a structure that user input
+            // relies on but is what we got for now.
             move_set.push_back(CreateMove(start_square, forward_square, PROMO_QUEEN));
             move_set.push_back(CreateMove(start_square, forward_square, PROMO_BISHOP));
             move_set.push_back(CreateMove(start_square, forward_square, PROMO_KNIGHT));
