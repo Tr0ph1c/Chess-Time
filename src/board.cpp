@@ -1,7 +1,6 @@
 #include "board.hpp"
 #include "piece.hpp"
 #include "move.hpp"
-#include <GameTracker.hpp>
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -9,7 +8,7 @@
 // TODO:
 // 50 move rule
 
-GameTracker *tracker;
+//GameTracker *tracker;
 
 const char* START_POS = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const char* VIENNA_POS = "rnbqkb1r/ppp2ppp/3p1n2/4p3/4PP2/2N5/PPPP2PP/R1BQKBNR w KQkq - 0 4";
@@ -103,22 +102,10 @@ void Board::LoadBoard (const char* FEN) {
 }
 
 
-void Board::RestartBoard(GameTracker *_tracker) {
-    tracker = _tracker;
-    // LoadBoard(VIENNA_POS);
+void Board::RestartBoard() {
+    // tracker = _tracker;
+    LoadBoard(VIENNA_POS);
     GenerateAllMoves();
-}
-
-bool Board::IsWhiteToPlay () {
-    return color_to_play == WHITE;
-}
-
-bool Board::IsEnemyPiece (int p) {
-    return p & (color_to_play ^ 0x0030); // flips the bits of white and black
-}
-
-bool Board::IsAllyPiece (int p) { 
-    return p & color_to_play;
 }
 
 void Board::EndTurn () {
@@ -361,7 +348,7 @@ void Board::ExecuteMove (Move move) {
     moved_piece = squares[start_pos];
     white_color = IsWhiteToPlay();
 
-    tracker->NewMove(move, squares[final_pos], NON);
+    //tracker->NewMove(move, squares[final_pos], NON);
 
     squares[final_pos] = moved_piece;
     squares[start_pos] = EMPTY;

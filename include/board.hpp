@@ -2,7 +2,6 @@
 
 #include "piece.hpp"
 #include "move.hpp"
-#include "GameTracker.hpp"
 #include <vector>
 
 class Board {
@@ -33,11 +32,12 @@ class Board {
 
     void PrintBoard ();
     void LoadBoard (const char* FEN);
-    void RestartBoard(GameTracker *_tracker);
+    void RestartBoard();
     
-    inline bool IsWhiteToPlay ();
-    inline bool IsEnemyPiece (int p);
-    inline bool IsAllyPiece  (int p);
+    inline bool IsWhiteToPlay () { return color_to_play == WHITE; };
+    inline bool IsEnemyPiece (int p) { return p & (color_to_play ^ 0x0030); }
+    inline bool IsAllyPiece (int p) { return p & color_to_play; }
+
     void EndTurn ();
 
     void GeneratePawnMoves      (int ,int);

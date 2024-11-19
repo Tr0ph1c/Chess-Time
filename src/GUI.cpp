@@ -32,7 +32,7 @@ SDL_Color BlackSquareColor = {.r = 150 , .g = 100 , .b = 65 ,.a = 255};
 SDL_Color WhiteSquareColor = {.r = 240 , .g = 217 , .b = 181 ,.a = 255};
 SDL_Color BlackSquareColor = {.r = 181 , .g = 136 , .b = 99 ,.a = 255};
 
- SDL_Color HighlightColor = {.r = 255 , .g = 255 , .b = 0 ,.a = 90};
+SDL_Color HighlightColor = {.r = 255 , .g = 255 , .b = 0 ,.a = 90};
 TTF_Font *ConsolaFont;
 
 
@@ -140,7 +140,8 @@ void Deselect () {
 void Select (int square) {
     selected_square = square;
 }
-void HandleBoardClick(int x,int y){
+
+void HandleBoardClick(int x, int y){
     int rank = abs(y - BoardRect.y - BoardRect.h) / (BoardRect.h / 8);
     int file = (x - BoardRect.x) / (BoardRect.w / 8);
 
@@ -174,8 +175,10 @@ void Click (int x, int y) {
             y < BoardRect.y ||
             y > BoardRect.y + BoardRect.h)
         return;
+
     HandleBoardClick(x,y);
 }
+
 void DrawArrow(int relevant_x ,int relevant_y ,bool is_to_right , SDL_Rect &parent){
     SDL_Rect dest_rect;
     dest_rect.x = relevant_x + parent.x      ;
@@ -201,8 +204,6 @@ void RenderBoardRightSide(){
 
 
     DrawArrow(0,0,false,controlles);
-
-
 }
 
 void GUI () {
@@ -288,16 +289,16 @@ void Init (Board* _board) {
 
     //components
     Components::arrow_png = arrow_png;
-    Components::tracker   = tracker  ;
-    Components::renderer = renderer;
+    Components::tracker   = tracker;
+    Components::renderer  = renderer;
 
-    SDL_Rect controlles;
-    controlles.x = BoardRect.x + BoardRect.w + 20 ;
-    controlles.y = BoardRect.y + 50               ;
-    controlles.w = 250                            ;
-    controlles.h = 25                             ;
-    Components::components.push(new Components::NextBtn(0, 0, &controlles));
+    SDL_Rect controls;
+    controls.x = BoardRect.x + BoardRect.w + 20 ;
+    controls.y = BoardRect.y + 50               ;
+    controls.w = 250                            ;
+    controls.h = 25                             ;
 
+    Components::components.push(new Components::NextBtn(0, 0, &controls));
 }
 
 void Shutdown () {

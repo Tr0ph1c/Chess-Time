@@ -1,5 +1,4 @@
-#ifndef CHESS_TIME_COMPONENT_H
-#define CHESS_TIME_COMPONENT_H
+#pragma once
 
 #include <unordered_map>
 #include <queue>
@@ -8,7 +7,7 @@
 
 namespace Components {
 
-SDL_Texture * arrow_png;
+SDL_Texture *arrow_png;
 GameTracker *tracker;
 SDL_Renderer *renderer;
 
@@ -20,11 +19,11 @@ class Component {
         virtual void Execute() = 0;
         bool IsPointInside(int x ,int y){
             SDL_Point point = {.x = x , .y = y};
-            return SDL_PointInRect(&point,&pos);
+            return SDL_PointInRect(&point, &pos);
         }
-
 };
-class NextBtn : Component{
+
+class NextBtn : public Component {
     private:
         SDL_Rect *parent;
 
@@ -47,7 +46,7 @@ class NextBtn : Component{
 
 };
 
-class PrevBtn : Component{
+class PrevBtn : public Component {
     private:
         SDL_Rect *parent;
 
@@ -72,7 +71,4 @@ class PrevBtn : Component{
 
 std::queue<Component*> components;
 
-
 } // Components
-
-#endif //CHESS_TIME_COMPONENT_H
