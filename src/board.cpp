@@ -79,14 +79,14 @@ void Board::LoadBoard (const char* FEN) {
             case 3: {
                 if (c == '-') continue;
                 EnPassant.IsAvailable = 1;
-                EnPassant.place = NotationToBoardIndex(ToDigit(*FEN), c);
+                EnPassant.place = NotationToBoardIndex(HelperClass::ToDigit(*FEN), c);
             } break;
             case 4: {
                 printf("FEN: %c\n", *FEN);
-                fifty_move_rule = GetNumberFromPointer(FEN - 1);
+                fifty_move_rule = HelperClass::GetNumberFromPointer(FEN - 1);
             } break;
             case 5: {
-                half_moves = FullMovesToHalfMoves(GetNumberFromPointer(FEN - 1), color_to_play == WHITE);
+                half_moves = FullMovesToHalfMoves(HelperClass::GetNumberFromPointer(FEN - 1), color_to_play == WHITE);
                 if (EnPassant.IsAvailable != -1) EnPassant.IsAvailable = half_moves;
             }
             case 6: {
@@ -425,23 +425,80 @@ void Board::PreCalculateDistancesToEdgeOfBoard () {
     }
 }
 
-int Board::ToDigit (char c) {
-    if (c < '0' || c > '9') {
-        printf("could not convert to digit: [%c]\n", c);
-        return -1;
-    }
-    return static_cast<int>(c - '0');
+// ====================   Game Tracker   =========================== //
+
+GameTracker::GameTracker(){
+    curr_pos = Moves.end();
+    init_state_summary = 0b00000000;
 }
 
-int Board::GetNumberFromPointer (const char* p) {
-    int result = 0;
+GameTracker::GameTracker(Board *board): GameTracker(){
+    this->board = board;
+    this->SetFEN();
+}
 
-    while (result < 100 && result > -1) {
-        result *= 10;
-        result += ToDigit(*p);
-        if (*(p+1) == ' ' || *(p+1) == '\0') break;
-        p++;
-    }
+GameTracker::GameTracker(Board *board , std::string FEN): GameTracker(){
+    this->board = board;
+    this->SetFEN(FEN);
+}
 
-    return result;
+void GameTracker::SetFEN(std::string FEN){
+    ResetTracker();
+    start_pos = FEN;
+    this->board->LoadBoard(FEN.c_str());
+}
+
+
+
+
+size_t GameTracker::MovesCount() {
+    return (Moves.size());
+}
+
+bool GameTracker::IsEmpty(){
+    return (! Moves.size());
+}
+
+void GameTracker::ImportPGN(std::string PGN){
+
+}
+
+std::string GameTracker::ExportPGN(){
+    return "NOT FINISHED";
+}
+
+
+void GameTracker::Prev () {
+
+}
+
+void GameTracker::Next () {
+
+}
+
+void GameTracker::GoToMove (int MoveNumber) {
+
+}
+
+bool GameTracker::IsThisLastMove () {
+    return curr_pos == Moves.rbegin().base();
+}
+
+bool GameTracker::IsThisFristMove () {
+    return curr_pos == Moves.begin();
+}
+
+void GameTracker::NewMove(Move mv) {
+    Moves.push_back(mv);
+    curr_pos = Moves.end();
+    curr_pos--;
+}
+
+void GameTracker::UndoMove() {
+    Moves.pop_back();
+}
+
+void GameTracker::ResetTracker() {
+    Moves.clear();
+    curr_pos = Moves.end();
 }

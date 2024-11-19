@@ -3,6 +3,8 @@
 #include "piece.hpp"
 #include "move.hpp"
 #include <vector>
+#include <list>
+#include <string>
 
 class Board {
     public:
@@ -55,19 +57,70 @@ class Board {
     static int NotationToBoardIndex (int, char);
     static int NotationToBoardIndex (int, int);
     void PreCalculateDistancesToEdgeOfBoard ();
-
-    static int ToDigit (char);
-    static int GetNumberFromPointer (const char*);
 };
 
-/*
- * a static array with an iterator interface
- * seems to be the best option for search speed
-class MoveSet {
-    Move moves[256] = {0};
-    Move* head = 0;
+class GameTracker
+{
+private:
+    std::list<Move> Moves;
+    std::list<Move>::iterator curr_pos;
+    uint8_t init_state_summary;
+    std::string start_pos; //FEN
+    Board *board;
 
-    public:
+    void ResetTracker();
 
+public:
+    GameTracker(Board *board);
+    GameTracker(Board *board, std::string FEN);
+    GameTracker();
+
+    size_t MovesCount();
+    bool IsEmpty();
+
+    void ImportPGN(std::string);
+    std::string ExportPGN();
+    void SetFEN(std::string  FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" );
+    // void SetFEN();
+
+    // Moves stuff
+    void Prev();
+    void Next();
+    /*
+    * GoToMove change the board state to MoveNumber state
+    * MoveNumber must be an intger value which (MoveNumber >= 0 && MoveNumber < MovesCount)
+    */
+    void GoToMove(int move_num);
+    bool IsThisLastMove();
+    bool IsThisFristMove();
+    /*
+    * NewMove Inset new move 
+    * Pre : This must be the last move played
+    */
+    void NewMove(Move mv);
+    void UndoMove();
 };
-*/
+
+class HelperClass {
+public:
+static int ToDigit (char c) {
+    if (c < '0' || c > '9') {
+        printf("could not convert to digit: [%c]\n", c);
+        return -1;
+    }
+    return static_cast<int>(c - '0');
+}
+
+static int GetNumberFromPointer (const char* p) {
+    int result = 0;
+
+    while (result < 100 && result > -1) {
+        result *= 10;
+        result += ToDigit(*p);
+        if (*(p+1) == ' ' || *(p+1) == '\0') break;
+        p++;
+    }
+
+    return result;
+}
+};

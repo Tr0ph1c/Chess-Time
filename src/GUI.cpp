@@ -1,9 +1,9 @@
 #include "board.hpp"
+#include "Components.cpp"
 
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 #include "SDL2/SDL_ttf.h"
-#include "Components.cpp"
 
 #include <iostream>
 #include <algorithm>
@@ -154,7 +154,9 @@ void HandleBoardClick(int x, int y){
             Select(board_index);
         } else {
             auto move_to_execute = std::find(highlight_matrix[selected_square]->begin(), highlight_matrix[selected_square]->end(), board_index);
+
             if (move_to_execute != highlight_matrix[selected_square]->end()) {
+                // if move_to_execute Promotion -> [selecting gui] -> execute correct move
                 board->ExecuteMove(move_set->at(move_to_execute->index));
                 FillHighlightMatrix();
                 Deselect();

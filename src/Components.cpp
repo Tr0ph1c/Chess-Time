@@ -3,7 +3,6 @@
 #include <unordered_map>
 #include <queue>
 #include "SDL2/SDL.h"
-#include "GameTracker.hpp"
 
 namespace Components {
 
