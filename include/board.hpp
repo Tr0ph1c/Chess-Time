@@ -49,8 +49,9 @@ class Board {
     void GenerateMovesForSquare (int);
     void GenerateAllMoves       ();
 
-    void ExecuteMove (Move);
-    void HandlePawnMove(Piece, Move);
+    void ExecuteMove    (Move);
+    void UndoMove       (Move);
+    void HandlePawnMove (Piece, Move);
 
     static int FullMovesToHalfMoves (int, bool);
     static int HalfMovesToFullMoves (int);

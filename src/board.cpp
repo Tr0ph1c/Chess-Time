@@ -141,7 +141,7 @@ void Board::GeneratePawnMoves (int p, int start_square) {
         } else {
             move_set.push_back(CreateMove(start_square, forward_square, QUIET_MOVE));
             if (is_first_move && squares[start_square + dir*16] == EMPTY)
-                move_set.push_back(CreateMove(start_square, start_square + dir*16, QUIET_MOVE));
+                move_set.push_back(CreateMove(start_square, start_square + dir*16, DOUBLE_PAWN));
         }
     }
 
@@ -189,12 +189,12 @@ void Board::HandlePawnMove (Piece color, Move move) {
     start_pos = GetStartPos(move);
     final_pos = GetFinalPos(move);
 
-    if (abs(final_pos/8 - start_pos/8) == 2) {             // create en passant opportunity 
+    if (IsDoublePawn(move)) {                     // create en passant opportunity 
         EnPassant.IsAvailable = half_moves + 1;
         EnPassant.place = start_pos + dir*8;
-    } else if (IsEnPassant(move)) {                        // En Passant
+    } else if (IsEnPassant(move)) {               // En Passant
         squares[final_pos + dir*-1 * 8] = EMPTY;
-    } else if (IsPromotion(move)) {                        // Promotion
+    } else if (IsPromotion(move)) {               // Promotion
         squares[final_pos] = GetPromotionPieceFromMove(move) | color;
     }
 }
@@ -387,6 +387,62 @@ void Board::ExecuteMove (Move move) {
     half_moves++;
     color_to_play = (white_color)? BLACK : WHITE;
     /* Update board state */
+    
+    EndTurn();
+}
+
+void Board::UndoMove (Move move) {
+    uint8_t start_pos, final_pos, moved_piece, moved_piece_color, captured_piece_color, captured_piece = 0;
+
+    start_pos = GetStartPos(move);
+    final_pos = GetFinalPos(move);
+    moved_piece = squares[start_pos];
+    moved_piece_color = IsWhiteToPlay()? BLACK : WHITE;
+    captured_piece_color = color_to_play;
+    if (IsCapture(move)) captured_piece = GetCapturedPieceFromMove(move) | captured_piece_color;
+    int dir = (captured_piece_color == WHITE)? 1 : -1;
+
+    squares[start_pos] = moved_piece;
+
+    if (IsEnPassant(move)) {
+        squares[final_pos] = EMPTY;
+        squares[final_pos + 16 * dir] = PAWN | captured_piece_color;
+    } else {
+        squares[final_pos] = captured_piece;
+    }
+
+    /* Update Board State */
+    castling_rights |= ~GetCastleRights(move);
+
+    if (RawPiece(moved_piece) == PAWN) {
+        HandlePawnMove(color_to_play, move);
+    } else if (RawPiece(moved_piece) == KING) {
+        if (GetColor(moved_piece) == WHITE) white_king_pos = final_pos;
+        else                                black_king_pos = final_pos;
+
+        int KSC_SQUARE = (GetColor(moved_piece) == WHITE)? WKSC_SQUARE : BKSC_SQUARE;
+        int QSC_SQUARE = (GetColor(moved_piece) == WHITE)? WQSC_SQUARE : BQSC_SQUARE;
+        if (IsKSCastle(move)) {
+            squares[KSC_SQUARE + 1] = squares[KSC_SQUARE - 1];
+            squares[KSC_SQUARE - 1] = EMPTY;
+        } else if (IsQSCastle(move)) {
+            squares[QSC_SQUARE - 2] = squares[QSC_SQUARE + 1];
+            squares[QSC_SQUARE + 1] = EMPTY;
+        }
+    }
+
+    if (IsDoublePawn(move)) {                     // remove en passant opportunity
+        EnPassant.IsAvailable = -1;
+    } else if (IsEnPassant(move)) {               // create en passant opportunity
+        EnPassant.IsAvailable = half_moves;
+        EnPassant.place = final_pos;
+    } else if (IsPromotion(move)) {               // promotion
+        squares[start_pos] = PAWN | moved_piece_color;
+    }
+
+    half_moves--;
+    color_to_play = (IsWhiteToPlay())? BLACK : WHITE;
+    /* Update Board State */
     
     EndTurn();
 }

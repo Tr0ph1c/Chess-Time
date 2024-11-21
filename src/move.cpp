@@ -47,3 +47,7 @@ Piece GetPromotionPieceFromMove (Move m) {
             return PAWN;
     }
 }
+
+Piece GetCapturedPieceFromMove (Move m) {
+    return (m >> 20);
+}

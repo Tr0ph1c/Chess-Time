@@ -7,7 +7,7 @@
 
 typedef uint32_t Move;
 
-// 16-bit representation of a move:
+// 23-bit representation of a move:
 // ===============================
 //   000           0000          0000       000000       000000
 // captured    castle rights     flags     start_pos    final_pos
@@ -65,3 +65,4 @@ inline int GetFlags        (Move m) { return (m >> 12) & 0xF; }
 inline int GetCastleRights (Move m) { return (m >> 16) & 0xF; }
 
 Piece GetPromotionPieceFromMove (Move);
+Piece GetCapturedPieceFromMove  (Move); // returns raw piece

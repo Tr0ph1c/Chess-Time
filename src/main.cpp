@@ -28,8 +28,11 @@ void HandleEvents () {
             GUI::Click(event.button.x, event.button.y);
             break;
         case SDL_KEYDOWN:
-            if (event.key.keysym.sym >= SDLK_1 && event.key.keysym.sym <= SDLK_4)
-            GUI::ExecutePromotion(event.key.keysym.sym - SDLK_1);
+            if (event.key.keysym.sym >= SDLK_1 && event.key.keysym.sym <= SDLK_4) {
+                GUI::ExecutePromotion(event.key.keysym.sym - SDLK_1);
+            } else if (event.key.keysym.sym == SDLK_LEFT) {
+                //board.UndoMove(last_move???);
+            }
             break;
         default:
             break;
