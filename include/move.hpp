@@ -3,7 +3,8 @@
 #include "piece.hpp"
 #include <iostream>
 
-#define PR_CAS 0xF // Preserve castling rights
+#define PR_CAS 0xF   // Preserve castling rights
+#define NULL_MOVE 0  // Deleted moves are represented this way instead of having to physically remove them from arrays
 
 typedef uint32_t Move;
 
@@ -51,6 +52,7 @@ enum MOVE_FLAG {
 
 Move CreateMove   (uint8_t _start, uint8_t _final, uint8_t _flags = QUIET_MOVE, uint8_t _castle_rights = PR_CAS, Piece _captured = EMPTY);
 
+bool IsNullMove       (Move);
 bool IsNormalMove     (Move);
 bool IsCapture        (Move);
 bool IsEnPassant      (Move);
@@ -66,3 +68,4 @@ inline int GetCastleRights (Move m) { return (m >> 16) & 0xF; }
 
 Piece GetPromotionPieceFromMove (Move);
 Piece GetCapturedPieceFromMove  (Move); // returns raw piece
+std::string GetNotationFromMove (Move);

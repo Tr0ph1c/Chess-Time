@@ -51,8 +51,8 @@ class Board {
     Piece color_to_play = WHITE;
     int half_moves = 0;
     int fifty_move_rule = 0;
-    uint8_t white_king_pos;
-    uint8_t black_king_pos;
+    uint8_t white_king_pos = 4;
+    uint8_t black_king_pos = 60;
 
     void PrintBoard ();
     void LoadBoard (const char* FEN);
@@ -64,12 +64,11 @@ class Board {
 
     void EndTurn ();
 
-    void GeneratePawnMoves      (int ,int);
-    void GenerateKingMoves      (int);
-    void GenerateHorseMoves     (int);
-    void GenerateSlidingMoves   (int, int);
-    void GenerateMovesForSquare (int);
-    void GenerateAllMoves       ();
+    std::vector<Move> GetAllMoves   ();
+    std::vector<Move> GetLegalMoves ();
+
+    bool IsInCheck ();
+    bool IsSquareAttacked (int square_index);
 
     void ExecuteMove    (Move);
     void UndoMove       (Move);

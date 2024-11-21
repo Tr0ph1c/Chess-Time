@@ -129,6 +129,8 @@ void FillHighlightMatrix () {
     }
 
     for (int i = 0; i < static_cast<int>(move_set->size()); ++i) {
+        if (IsNullMove(move_set->at(i))) continue;
+
         int square_to_fill = GetStartPos(move_set->at(i));
         PosMove pm(i, GetFinalPos(move_set->at(i)));
         highlight_matrix[square_to_fill]->push_back(pm);
@@ -152,6 +154,7 @@ void ExecutePromotion (int promotion_offset) {
     if (is_user_promoting) {
         is_user_promoting = false;
         board->ExecuteMove(move_set->at(promotion_index + promotion_offset));
+        board->EndTurn();
         FillHighlightMatrix();
         Deselect();
     }
@@ -166,6 +169,7 @@ void UndoUserMove () {
     if (board->tracker.IsEmpty()) return;
     Deselect();
     board->UndoMove(board->tracker.GetCurrMove());
+    board->EndTurn();
     FillHighlightMatrix();
 }
 
@@ -189,6 +193,7 @@ void HandleBoardClick (int x, int y){
                     return;
                 }
                 board->ExecuteMove(move_set->at(move_to_execute->index));
+                board->EndTurn();
                 FillHighlightMatrix();
                 Deselect();
             } else {
