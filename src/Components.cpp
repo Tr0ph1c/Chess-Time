@@ -7,7 +7,6 @@
 namespace Components {
 
 SDL_Texture *arrow_png;
-GameTracker *tracker;
 SDL_Renderer *renderer;
 
 
@@ -40,7 +39,7 @@ class NextBtn : public Component {
             SDL_RenderCopyEx(renderer, arrow_png, NULL, &pos, 0.0, NULL, SDL_FLIP_NONE);
         }
         void Execute() override{
-            tracker->Next();
+            //tracker->Next();
         }
 
 };
@@ -63,7 +62,7 @@ class PrevBtn : public Component {
             SDL_RenderCopyEx(renderer, arrow_png, NULL, &pos, 0.0, NULL, SDL_FLIP_HORIZONTAL);
         }
         void Execute() override{
-            tracker->Prev();
+            //tracker->Prev();
         }
 
 };

@@ -3,7 +3,7 @@
 #include "piece.hpp"
 #include <iostream>
 
-#define PR_CAS 0xFF // Preserve castling rights
+#define PR_CAS 0xF // Preserve castling rights
 
 typedef uint32_t Move;
 

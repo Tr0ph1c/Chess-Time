@@ -3,12 +3,33 @@
 #include "piece.hpp"
 #include "move.hpp"
 #include <vector>
-#include <list>
 #include <string>
+
+class GameTracker
+{
+private:
+    std::vector<Move> move_history;
+
+public:
+    size_t MovesCount();
+    bool IsEmpty();
+    Move GetCurrMove();
+
+    void ImportPGN(std::string);
+    std::string ExportPGN();
+    void PrintTracker ();
+
+    void PushMove(Move mv);
+    void UndoMove();
+    void ResetTracker();
+};
 
 class Board {
     public:
     Board ();
+
+    const char* START_POS = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    const char* CUSTOM_POS = "rnbqkb1r/ppp2ppp/3p1n2/4p3/4PP2/2N5/PPPP2PP/R1BQKBNR w KQkq - 0 4";
     
     const int directions[8] = {8, -8, 1, -1, 7, -7, 9, -9};
     const int knight_moves[8] = {15, 17, -15, -17, 6, 10, -6, -10};
@@ -22,6 +43,7 @@ class Board {
     const int BQSC_SQUARE = 58;
 
     Piece squares[64] = {EMPTY};
+    GameTracker tracker;
     std::vector<Move> move_set;
     int distance_to_edge[64][8];
 
@@ -60,47 +82,48 @@ class Board {
     void PreCalculateDistancesToEdgeOfBoard ();
 };
 
-class GameTracker
-{
-private:
-    std::list<Move> Moves;
-    std::list<Move>::iterator curr_pos;
-    uint8_t init_state_summary;
-    std::string start_pos; //FEN
-    Board *board;
+// old game tracker
+// class GameTracker
+// {
+// private:
+//     std::vector<Move> move_history;
+//     //std::list<Move>::iterator curr_pos;
+//     //uint8_t init_state_summary;
+//     std::string start_pos; //FEN
+//     //Board *board;
 
-    void ResetTracker();
+// public:
+//     //GameTracker(Board *board);
+//     //GameTracker(Board *board, std::string FEN);
+//     //GameTracker();
 
-public:
-    GameTracker(Board *board);
-    GameTracker(Board *board, std::string FEN);
-    GameTracker();
+//     size_t MovesCount();
+//     bool IsEmpty();
 
-    size_t MovesCount();
-    bool IsEmpty();
+//     void ImportPGN(std::string);
+//     std::string ExportPGN();
+//     void PrintTracker ();
+//     /*
+//     * NewMove Inset new move 
+//     * Pre : This must be the last move played
+//     */
+//     void PushMove(Move mv);
+//     void UndoMove();
+//     void ResetTracker();
+//     //void SetFEN(std::string  FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" );
+//     //void SetFEN();
 
-    void ImportPGN(std::string);
-    std::string ExportPGN();
-    void SetFEN(std::string  FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" );
-    // void SetFEN();
-
-    // Moves stuff
-    void Prev();
-    void Next();
-    /*
-    * GoToMove change the board state to MoveNumber state
-    * MoveNumber must be an intger value which (MoveNumber >= 0 && MoveNumber < MovesCount)
-    */
-    void GoToMove(int move_num);
-    bool IsThisLastMove();
-    bool IsThisFristMove();
-    /*
-    * NewMove Inset new move 
-    * Pre : This must be the last move played
-    */
-    void NewMove(Move mv);
-    void UndoMove();
-};
+//     // // Moves stuff
+//     // void Prev();
+//     // void Next();
+//     // /*
+//     // * GoToMove change the board state to MoveNumber state
+//     // * MoveNumber must be an intger value which (MoveNumber >= 0 && MoveNumber < MovesCount)
+//     // */
+//     // void GoToMove(int move_num);
+//     // bool IsLastMove();
+//     // bool IsFirstMove();
+// };
 
 class HelperClass {
 public:

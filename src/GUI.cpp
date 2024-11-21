@@ -17,7 +17,6 @@
 namespace GUI {
 
 Board* board;
-GameTracker *tracker;
 
 SDL_Window*  window;
 SDL_Renderer* renderer;
@@ -163,7 +162,14 @@ void GiveUserPromotionChoice (int move_index) {
     promotion_index = move_index;
 }
 
-void HandleBoardClick(int x, int y){
+void UndoUserMove () {
+    if (board->tracker.IsEmpty()) return;
+    Deselect();
+    board->UndoMove(board->tracker.GetCurrMove());
+    FillHighlightMatrix();
+}
+
+void HandleBoardClick (int x, int y){
     int rank = abs(y - BoardRect.y - BoardRect.h) / (BoardRect.h / 8);
     int file = (x - BoardRect.x) / (BoardRect.w / 8);
 
@@ -334,7 +340,6 @@ void Init (Board* _board) {
 
     //components
     Components::arrow_png = arrow_png;
-    Components::tracker   = tracker;
     Components::renderer  = renderer;
 
     Components::components.push(new Components::NextBtn(0, 0, &controls));
@@ -344,7 +349,7 @@ void Shutdown () {
     IMG_Quit();
     SDL_DestroyTexture(pieces_png);
     SDL_DestroyTexture(arrow_png);
-    TTF_CloseFont( ConsolaFont );
+    TTF_CloseFont(ConsolaFont);
     TTF_Quit();
     
     SDL_DestroyRenderer(renderer);

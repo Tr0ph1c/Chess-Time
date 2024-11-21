@@ -34,7 +34,7 @@ Piece CharToPiece (char c) {
 
 char PieceToChar (Piece p) {
     if (GetColor(p) == 0) p |= WHITE;
-    
+
     switch (p) {
         case W_KING:
             return 'K';
@@ -78,7 +78,7 @@ Piece GetColor (Piece p) {
 }
 
 Piece RawPiece (Piece p) {
-    return PIECE_MASK & p;
+    return p & PIECE_MASK;
 }
 
 bool IsSlidingPiece (Piece p) {

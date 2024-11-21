@@ -7,11 +7,7 @@
 
 // TODO:
 // 50 move rule
-
-//GameTracker *tracker;
-
-const char* START_POS = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-const char* VIENNA_POS = "rnbqkb1r/ppp2ppp/3p1n2/4p3/4PP2/2N5/PPPP2PP/R1BQKBNR w KQkq - 0 4";
+// rework EnPassant struct into just "place" variable (-1 means no en passant)
 
 struct {
     int IsAvailable = -1;
@@ -103,13 +99,13 @@ void Board::LoadBoard (const char* FEN) {
 
 
 void Board::RestartBoard() {
-    // tracker = _tracker;
-    LoadBoard(VIENNA_POS);
+    tracker.ResetTracker();
+    LoadBoard(CUSTOM_POS);
     GenerateAllMoves();
 }
 
 void Board::EndTurn () {
-    // Stop clock
+    // Stop clock (not necessarily)
 
     // Check if its stalemate or checkmate or draw by other means
     if (fifty_move_rule == 50) {
@@ -352,7 +348,7 @@ void Board::ExecuteMove (Move move) {
     moved_piece = squares[start_pos];
     white_color = IsWhiteToPlay();
 
-    //tracker->NewMove(move, squares[final_pos], NON);
+    tracker.PushMove(move);
 
     squares[final_pos] = moved_piece;
     squares[start_pos] = EMPTY;
@@ -396,11 +392,13 @@ void Board::UndoMove (Move move) {
 
     start_pos = GetStartPos(move);
     final_pos = GetFinalPos(move);
-    moved_piece = squares[start_pos];
+    moved_piece = squares[final_pos];
     moved_piece_color = IsWhiteToPlay()? BLACK : WHITE;
     captured_piece_color = color_to_play;
     if (IsCapture(move)) captured_piece = GetCapturedPieceFromMove(move) | captured_piece_color;
     int dir = (captured_piece_color == WHITE)? 1 : -1;
+
+    tracker.UndoMove();
 
     squares[start_pos] = moved_piece;
 
@@ -487,11 +485,12 @@ void Board::PreCalculateDistancesToEdgeOfBoard () {
 
 // ====================   Game Tracker   =========================== //
 
-GameTracker::GameTracker(){
-    curr_pos = Moves.end();
-    init_state_summary = 0b00000000;
-}
+// GameTracker::GameTracker(){
+//     curr_pos = Moves.end();
+//     init_state_summary = 0b00000000;
+// }
 
+/* i dont think we'll need a reference to the board here
 GameTracker::GameTracker(Board *board): GameTracker(){
     this->board = board;
     this->SetFEN();
@@ -507,16 +506,21 @@ void GameTracker::SetFEN(std::string FEN){
     start_pos = FEN;
     this->board->LoadBoard(FEN.c_str());
 }
+*/
 
 
 
 
 size_t GameTracker::MovesCount() {
-    return (Moves.size());
+    return (move_history.size());
 }
 
 bool GameTracker::IsEmpty(){
-    return (! Moves.size());
+    return (!move_history.size());
+}
+
+Move GameTracker::GetCurrMove() {
+    return move_history.back();
 }
 
 void GameTracker::ImportPGN(std::string PGN){
@@ -527,7 +531,15 @@ std::string GameTracker::ExportPGN(){
     return "NOT FINISHED";
 }
 
+void GameTracker::PrintTracker () {
+    std::cout << "==================" << std::endl;
+    for (Move m : move_history) {
+        printf("%x\n", m);
+    }
+}
 
+
+/* At least for now we won't need to track WHERE we are on the list
 void GameTracker::Prev () {
 
 }
@@ -540,25 +552,24 @@ void GameTracker::GoToMove (int MoveNumber) {
 
 }
 
-bool GameTracker::IsThisLastMove () {
+bool GameTracker::IsLastMove () {
     return curr_pos == Moves.rbegin().base();
 }
 
-bool GameTracker::IsThisFristMove () {
+bool GameTracker::IsFirstMove () {
     return curr_pos == Moves.begin();
 }
+*/
 
-void GameTracker::NewMove(Move mv) {
-    Moves.push_back(mv);
-    curr_pos = Moves.end();
-    curr_pos--;
+void GameTracker::PushMove(Move mv) {
+    move_history.push_back(mv);
 }
 
 void GameTracker::UndoMove() {
-    Moves.pop_back();
+    move_history.pop_back();
 }
 
 void GameTracker::ResetTracker() {
-    Moves.clear();
-    curr_pos = Moves.end();
+    move_history.clear();
+    //curr_pos = Moves.end();
 }

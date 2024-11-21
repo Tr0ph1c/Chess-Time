@@ -2,7 +2,7 @@
 #include "move.hpp"
 
 Move CreateMove (uint8_t _start_pos, uint8_t _final_pos, uint8_t _flags, uint8_t _castle_rights, Piece _captured) {
-    return (((((((_captured << 3) | _castle_rights) << 4) | _flags) << 6) | _start_pos) << 6) | _final_pos;
+    return (((((((RawPiece(_captured) << 4) | _castle_rights) << 4) | _flags) << 6) | _start_pos) << 6) | _final_pos;
 }
 
 bool IsNormalMove (Move m) {

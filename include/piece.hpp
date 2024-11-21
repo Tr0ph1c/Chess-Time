@@ -2,12 +2,18 @@
 #include <iostream>
 #include <cstdint>
 
+// TODO:
+// Refactor into 4 bits and change
+// color representation to a boolean or int
+// that goes from 1 to -1 to represent
+// direction as well
+
 typedef uint8_t Piece;
 
-// 8-bit representation of a piece
+// 6-bit representation of a piece
 // ===================================
-// 00    00    0    000
-// --   color  -   piece
+//  00    0    000
+// color  -   piece
 //
 // color : 01 = white, 10 = black
 // piece : 0 = EMPTY, 1-6 = pieces

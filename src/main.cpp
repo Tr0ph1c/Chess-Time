@@ -31,7 +31,7 @@ void HandleEvents () {
             if (event.key.keysym.sym >= SDLK_1 && event.key.keysym.sym <= SDLK_4) {
                 GUI::ExecutePromotion(event.key.keysym.sym - SDLK_1);
             } else if (event.key.keysym.sym == SDLK_LEFT) {
-                //board.UndoMove(last_move???);
+                GUI::UndoUserMove();
             }
             break;
         default:
@@ -40,8 +40,6 @@ void HandleEvents () {
 }
 
 void Start () {
-    GameTracker *tracker = new GameTracker();
-    GUI::tracker = tracker;
     board.RestartBoard();
     GUI::FillHighlightMatrix();
 
