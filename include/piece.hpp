@@ -2,54 +2,48 @@
 #include <iostream>
 #include <cstdint>
 
-// TODO:
-// Refactor into 4 bits and change
-// color representation to a boolean or int
-// that goes from 1 to -1 to represent
-// direction as well
-
 typedef uint8_t Piece;
 
-// 6-bit representation of a piece
+// 4-bit representation of a piece
 // ===================================
-//  00    0    000
-// color  -   piece
+//  00     000
+// color  piece
 //
 // color : 01 = white, 10 = black
 // piece : 0 = EMPTY, 1-6 = pieces
 
-enum SQUARE_STATE {
-    COLOR_MASK = 0x30,
-    PIECE_MASK = 0x07,
-    MOVED      = 0x08,
-    EMPTY      = 0x00,
-    WHITE      = 0x10,
-    BLACK      = 0x20,
-    KING       = 0x01,
-    QUEEN     ,
-    BISHOP    ,
-    KNIGHT    ,
-    ROOK      ,
-    PAWN      ,
+enum SQUARE_STATE
+{
+    COLOR_MASK = 0x18,
+    PIECE_MASK = 0x7,
+    SLIDE_MASK = 0x4,
+    EMPTY = 0x0,
+    WHITE = 0x8,
+    BLACK = 0x10,
+    KING = 0x1,
+    KNIGHT,
+    PAWN,
+    QUEEN,
+    BISHOP,
+    ROOK,
     W_KING = KING | WHITE,
-    W_QUEEN   ,
-    W_BISHOP  ,
-    W_KNIGHT  ,
-    W_ROOK    ,
-    W_PAWN    ,
+    W_KNIGHT,
+    W_PAWN,
+    W_QUEEN,
+    W_BISHOP,
+    W_ROOK,
     B_KING = KING | BLACK,
-    B_QUEEN   ,
-    B_BISHOP  ,
-    B_KNIGHT  ,
-    B_ROOK    ,
-    B_PAWN
+    B_KNIGHT,
+    B_PAWN,
+    B_QUEEN,
+    B_BISHOP,
+    B_ROOK
 };
 
 Piece   CharToPiece    (char c);
 char    PieceToChar    (Piece p);
 bool    IsWhite        (Piece p);
 bool    IsBlack        (Piece p);
-Piece   GetColor       (Piece p);
 Piece   RawPiece       (Piece p);
 bool    IsSlidingPiece (Piece p);
-bool    HasMoved       (Piece p);
+Piece   SwitchColor    (Piece p);

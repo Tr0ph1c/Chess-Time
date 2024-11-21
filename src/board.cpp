@@ -82,12 +82,12 @@ void Board::LoadBoard (const char* FEN) {
                 fifty_move_rule = HelperClass::GetNumberFromPointer(FEN - 1);
             } break;
             case 5: {
-                half_moves = FullMovesToHalfMoves(HelperClass::GetNumberFromPointer(FEN - 1), color_to_play == WHITE);
+                half_moves = FullMovesToHalfMoves(HelperClass::GetNumberFromPointer(FEN - 1), IsWhiteToPlay());
                 if (EnPassant.IsAvailable != -1) EnPassant.IsAvailable = half_moves;
             }
             case 6: {
                 printf("Loaded game:\nColor to play: %c\nCastling rights: %d\nEn passant: %d\n50 move clock: %d\nFull move counter: %d\n",
-                (color_to_play == WHITE)? 'w' : 'b',
+                IsWhiteToPlay()? 'w' : 'b',
                 castling_rights,
                 EnPassant.place,
                 fifty_move_rule,
@@ -381,7 +381,7 @@ void Board::ExecuteMove (Move move) {
     }
 
     half_moves++;
-    color_to_play = (white_color)? BLACK : WHITE;
+    color_to_play = SwitchColor(color_to_play);
     /* Update board state */
     
     EndTurn();
@@ -393,7 +393,7 @@ void Board::UndoMove (Move move) {
     start_pos = GetStartPos(move);
     final_pos = GetFinalPos(move);
     moved_piece = squares[final_pos];
-    moved_piece_color = IsWhiteToPlay()? BLACK : WHITE;
+    moved_piece_color = SwitchColor(color_to_play);
     captured_piece_color = color_to_play;
     if (IsCapture(move)) captured_piece = GetCapturedPieceFromMove(move) | captured_piece_color;
     int dir = (captured_piece_color == WHITE)? 1 : -1;
@@ -415,11 +415,11 @@ void Board::UndoMove (Move move) {
     if (RawPiece(moved_piece) == PAWN) {
         HandlePawnMove(color_to_play, move);
     } else if (RawPiece(moved_piece) == KING) {
-        if (GetColor(moved_piece) == WHITE) white_king_pos = final_pos;
-        else                                black_king_pos = final_pos;
+        if (IsWhite(moved_piece)) white_king_pos = final_pos;
+        else                      black_king_pos = final_pos;
 
-        int KSC_SQUARE = (GetColor(moved_piece) == WHITE)? WKSC_SQUARE : BKSC_SQUARE;
-        int QSC_SQUARE = (GetColor(moved_piece) == WHITE)? WQSC_SQUARE : BQSC_SQUARE;
+        int KSC_SQUARE = IsWhite(moved_piece)? WKSC_SQUARE : BKSC_SQUARE;
+        int QSC_SQUARE = IsWhite(moved_piece)? WQSC_SQUARE : BQSC_SQUARE;
         if (IsKSCastle(move)) {
             squares[KSC_SQUARE + 1] = squares[KSC_SQUARE - 1];
             squares[KSC_SQUARE - 1] = EMPTY;
@@ -439,7 +439,7 @@ void Board::UndoMove (Move move) {
     }
 
     half_moves--;
-    color_to_play = (IsWhiteToPlay())? BLACK : WHITE;
+    color_to_play = SwitchColor(color_to_play);
     /* Update Board State */
     
     EndTurn();

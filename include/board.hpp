@@ -48,7 +48,7 @@ class Board {
     int distance_to_edge[64][8];
 
     uint8_t castling_rights = 0b0000; // KQkq
-    int color_to_play = WHITE;
+    Piece color_to_play = WHITE;
     int half_moves = 0;
     int fifty_move_rule = 0;
     uint8_t white_king_pos;
@@ -59,8 +59,8 @@ class Board {
     void RestartBoard();
     
     inline bool IsWhiteToPlay () { return color_to_play == WHITE; };
-    inline bool IsEnemyPiece (int p) { return p & (color_to_play ^ 0x0030); }
-    inline bool IsAllyPiece (int p) { return p & color_to_play; }
+    inline bool IsEnemyPiece (Piece p) { return p & (SwitchColor(color_to_play)); }
+    inline bool IsAllyPiece (Piece p) { return p & color_to_play; }
 
     void EndTurn ();
 

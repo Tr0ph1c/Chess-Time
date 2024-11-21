@@ -33,8 +33,6 @@ Piece CharToPiece (char c) {
 }
 
 char PieceToChar (Piece p) {
-    if (GetColor(p) == 0) p |= WHITE;
-
     switch (p) {
         case W_KING:
             return 'K';
@@ -73,25 +71,14 @@ bool IsBlack (Piece p) {
     return BLACK & p;
 }
 
-Piece GetColor (Piece p) {
-    return COLOR_MASK & p;
-}
-
 Piece RawPiece (Piece p) {
     return p & PIECE_MASK;
 }
 
 bool IsSlidingPiece (Piece p) {
-    switch (RawPiece(p)) {
-        case QUEEN:
-        case BISHOP:
-        case ROOK:
-            return true;
-        default:
-            return false;
-    }
+    return p & SLIDE_MASK;
 }
 
-bool HasMoved (Piece p) {
-    return MOVED & p;
+Piece SwitchColor (Piece p) {
+    return p ^ COLOR_MASK;
 }
