@@ -8,12 +8,6 @@
 
 // TODO:
 // 50 move rule
-// rework EnPassant struct into just "place" variable (-1 means no en passant)
-
-struct {
-    int IsAvailable = -1;
-    int place = -1;
-} EnPassant;
 
 // Board
 
@@ -73,8 +67,7 @@ void Board::LoadBoard (const char* FEN) {
             } break;
             case 3: {
                 if (c == '-') continue;
-                EnPassant.IsAvailable = 1;
-                EnPassant.place = NotationToBoardIndex(HelperClass::ToDigit(*FEN), c);
+                enpassant_place = NotationToBoardIndex(HelperClass::ToDigit(*FEN), c);
             } break;
             case 4: {
                 printf("FEN: %c\n", *FEN);
@@ -82,13 +75,12 @@ void Board::LoadBoard (const char* FEN) {
             } break;
             case 5: {
                 half_moves = FullMovesToHalfMoves(HelperClass::GetNumberFromPointer(FEN - 1), IsWhiteToPlay());
-                if (EnPassant.IsAvailable != -1) EnPassant.IsAvailable = half_moves;
             }
             case 6: {
                 printf("Loaded game:\nColor to play: %c\nCastling rights: %d\nEn passant: %d\n50 move clock: %d\nFull move counter: %d\n",
                 IsWhiteToPlay()? 'w' : 'b',
                 castling_rights,
-                EnPassant.place,
+                enpassant_place,
                 fifty_move_rule,
                 HalfMovesToFullMoves(half_moves));
             } break;
@@ -113,23 +105,6 @@ void Board::EndTurn () {
     }
     
     move_set = GetLegalMoves();
-}
-
-void Board::HandlePawnMove (Piece color, Move move) {
-    int dir = (color == WHITE)? 1 : -1;
-    uint8_t start_pos, final_pos;
-
-    start_pos = GetStartPos(move);
-    final_pos = GetFinalPos(move);
-
-    if (IsDoublePawn(move)) {                     // create en passant opportunity 
-        EnPassant.IsAvailable = half_moves + 1;
-        EnPassant.place = start_pos + dir*8;
-    } else if (IsEnPassant(move)) {               // En Passant
-        squares[final_pos + dir*-1 * 8] = EMPTY;
-    } else if (IsPromotion(move)) {               // Promotion
-        squares[final_pos] = GetPromotionPieceFromMove(move) | color;
-    }
 }
 
 std::vector<Move> Board::GetAllMoves () {
@@ -303,11 +278,11 @@ std::vector<Move> Board::GetAllMoves () {
             }
 
             // en passant
-            if (half_moves == EnPassant.IsAvailable) {
-                if (first_diagonal == EnPassant.place &&
+            if (EnPassantExists()) {
+                if (first_diagonal == enpassant_place &&
                 abs(start_file - first_diagonal%8) == 1) {
                     moves.push_back(CreateMove(start_square, first_diagonal, EN_PASSANT, PR_CAS, PAWN));
-                } else if(second_diagonal == EnPassant.place &&
+                } else if(second_diagonal == enpassant_place &&
                 abs(start_file - second_diagonal%8) == 1) {
                     moves.push_back(CreateMove(start_square, second_diagonal, EN_PASSANT, PR_CAS, PAWN));
                 }
@@ -321,7 +296,7 @@ std::vector<Move> Board::GetAllMoves () {
 std::vector<Move> Board::GetLegalMoves () {
     std::vector<Move> moves = GetAllMoves();
 
-    for (int i = 0; i < moves.size(); ++i) {
+    for (size_t i = 0; i < moves.size(); ++i) {
         ExecuteMove(moves[i]);
         color_to_play = SwitchColor(color_to_play);
         if (IsInCheck()) {
@@ -372,7 +347,19 @@ void Board::ExecuteMove (Move move) {
     castling_rights &= GetCastleRights(move);
 
     if (RawPiece(moved_piece) == PAWN) {
-        HandlePawnMove(color_to_play, move);
+        int dir = (white_color)? 1 : -1;
+        uint8_t start_pos, final_pos;
+
+        start_pos = GetStartPos(move);
+        final_pos = GetFinalPos(move);
+
+        if (IsDoublePawn(move)) {                     // create en passant opportunity 
+            enpassant_place = start_pos + dir*8;
+        } else if (IsEnPassant(move)) {               // En Passant
+            squares[final_pos + dir*-1 * 8] = EMPTY;
+        } else if (IsPromotion(move)) {               // Promotion
+            squares[final_pos] = GetPromotionPieceFromMove(move) | color_to_play;
+        }
     } else if (RawPiece(moved_piece) == KING) {
         if (white_color) white_king_pos = final_pos;
         else             black_king_pos = final_pos;
@@ -387,6 +374,8 @@ void Board::ExecuteMove (Move move) {
             squares[QSC_SQUARE - 2] = EMPTY;
         }
     }
+
+    if (!IsDoublePawn(move)) enpassant_place = -1;
 
     if (IsCapture(move) || RawPiece(moved_piece) == PAWN) {
         fifty_move_rule = 0;
@@ -414,21 +403,32 @@ void Board::UndoMove (Move move) {
 
     tracker.UndoMove();
 
-    squares[start_pos] = moved_piece;
+    // replace the piece to its original square
+    // if the move was a promotion, demote the piece
+    if (IsPromotion(move)) squares[start_pos] = PAWN | moved_piece_color;
+    else                   squares[start_pos] = moved_piece;
 
+    // change the final square depending on move type
     if (IsEnPassant(move)) {
         squares[final_pos] = EMPTY;
-        squares[final_pos + 16 * dir] = PAWN | captured_piece_color;
+        squares[final_pos + 8 * dir] = PAWN | captured_piece_color;
     } else {
         squares[final_pos] = captured_piece;
+    }
+    
+    // check if the move before the undone move was a double pawn push
+    // if so, then set the en passant square
+    Move past_move = tracker.GetCurrMove();
+    if (!tracker.IsEmpty() && IsDoublePawn(past_move)) {
+        enpassant_place = GetStartPos(past_move) + (IsWhiteToPlay()? 8 : -8);
+    } else {
+        enpassant_place = -1;
     }
 
     /* Update Board State */
     castling_rights |= ~GetCastleRights(move);
 
-    if (RawPiece(moved_piece) == PAWN) {
-        HandlePawnMove(color_to_play, move);
-    } else if (RawPiece(moved_piece) == KING) {
+    if (RawPiece(moved_piece) == KING) {
         if (IsWhite(moved_piece)) white_king_pos = start_pos;
         else                      black_king_pos = start_pos;
 
@@ -441,15 +441,6 @@ void Board::UndoMove (Move move) {
             squares[QSC_SQUARE - 2] = squares[QSC_SQUARE + 1];
             squares[QSC_SQUARE + 1] = EMPTY;
         }
-    }
-
-    if (IsDoublePawn(move)) {                     // remove en passant opportunity
-        EnPassant.IsAvailable = -1;
-    } else if (IsEnPassant(move)) {               // create en passant opportunity
-        EnPassant.IsAvailable = half_moves;
-        EnPassant.place = final_pos;
-    } else if (IsPromotion(move)) {               // promotion
-        squares[start_pos] = PAWN | moved_piece_color;
     }
 
     half_moves--;

@@ -48,6 +48,7 @@ class Board {
     int distance_to_edge[64][8];
 
     uint8_t castling_rights = 0b0000; // KQkq
+    int enpassant_place = -1;
     Piece color_to_play = WHITE;
     int half_moves = 0;
     int fifty_move_rule = 0;
@@ -61,6 +62,7 @@ class Board {
     inline bool IsWhiteToPlay () { return color_to_play == WHITE; };
     inline bool IsEnemyPiece (Piece p) { return p & (SwitchColor(color_to_play)); }
     inline bool IsAllyPiece (Piece p) { return p & color_to_play; }
+    inline bool EnPassantExists () { return enpassant_place != -1; }
 
     void EndTurn ();
 
