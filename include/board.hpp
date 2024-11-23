@@ -26,9 +26,8 @@ public:
 
 class Board {
     public:
-    Board ();
-
     const char* START_POS = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    const char* DEBUG_POS = "rnbqkbnr/pppppppp/8/8/8/1P6/P1PPPPPP/RNBQKBNR b KQkq - 0 1";
     const char* CUSTOM_POS = "rnbqkb1r/ppp2ppp/3p1n2/4p3/4PP2/2N5/PPPP2PP/R1BQKBNR w KQkq - 0 4";
     
     const int directions[8] = {8, -8, 1, -1, 7, -7, 9, -9};
@@ -44,8 +43,75 @@ class Board {
 
     Piece squares[64] = {EMPTY};
     GameTracker tracker;
+    // TODO: make the move_set into a normal array with a max size of 256
+    // this will require lots of refactoring
     std::vector<Move> move_set;
-    int distance_to_edge[64][8];
+    int distance_to_edge[64][8] = {
+        {7, 0, 7, 0, 0, 0, 7, 0},
+        {7, 0, 6, 1, 1, 0, 6, 0},
+        {7, 0, 5, 2, 2, 0, 5, 0},
+        {7, 0, 4, 3, 3, 0, 4, 0},
+        {7, 0, 3, 4, 4, 0, 3, 0},
+        {7, 0, 2, 5, 5, 0, 2, 0},
+        {7, 0, 1, 6, 6, 0, 1, 0},
+        {7, 0, 0, 7, 7, 0, 0, 0},
+        {6, 1, 7, 0, 0, 1, 6, 0},
+        {6, 1, 6, 1, 1, 1, 6, 1},
+        {6, 1, 5, 2, 2, 1, 5, 1},
+        {6, 1, 4, 3, 3, 1, 4, 1},
+        {6, 1, 3, 4, 4, 1, 3, 1},
+        {6, 1, 2, 5, 5, 1, 2, 1},
+        {6, 1, 1, 6, 6, 1, 1, 1},
+        {6, 1, 0, 7, 6, 0, 0, 1},
+        {5, 2, 7, 0, 0, 2, 5, 0},
+        {5, 2, 6, 1, 1, 2, 5, 1},
+        {5, 2, 5, 2, 2, 2, 5, 2},
+        {5, 2, 4, 3, 3, 2, 4, 2},
+        {5, 2, 3, 4, 4, 2, 3, 2},
+        {5, 2, 2, 5, 5, 2, 2, 2},
+        {5, 2, 1, 6, 5, 1, 1, 2},
+        {5, 2, 0, 7, 5, 0, 0, 2},
+        {4, 3, 7, 0, 0, 3, 4, 0},
+        {4, 3, 6, 1, 1, 3, 4, 1},
+        {4, 3, 5, 2, 2, 3, 4, 2},
+        {4, 3, 4, 3, 3, 3, 4, 3},
+        {4, 3, 3, 4, 4, 3, 3, 3},
+        {4, 3, 2, 5, 4, 2, 2, 3},
+        {4, 3, 1, 6, 4, 1, 1, 3},
+        {4, 3, 0, 7, 4, 0, 0, 3},
+        {3, 4, 7, 0, 0, 4, 3, 0},
+        {3, 4, 6, 1, 1, 4, 3, 1},
+        {3, 4, 5, 2, 2, 4, 3, 2},
+        {3, 4, 4, 3, 3, 4, 3, 3},
+        {3, 4, 3, 4, 3, 3, 3, 4},
+        {3, 4, 2, 5, 3, 2, 2, 4},
+        {3, 4, 1, 6, 3, 1, 1, 4},
+        {3, 4, 0, 7, 3, 0, 0, 4},
+        {2, 5, 7, 0, 0, 5, 2, 0},
+        {2, 5, 6, 1, 1, 5, 2, 1},
+        {2, 5, 5, 2, 2, 5, 2, 2},
+        {2, 5, 4, 3, 2, 4, 2, 3},
+        {2, 5, 3, 4, 2, 3, 2, 4},
+        {2, 5, 2, 5, 2, 2, 2, 5},
+        {2, 5, 1, 6, 2, 1, 1, 5},
+        {2, 5, 0, 7, 2, 0, 0, 5},
+        {1, 6, 7, 0, 0, 6, 1, 0},
+        {1, 6, 6, 1, 1, 6, 1, 1},
+        {1, 6, 5, 2, 1, 5, 1, 2},
+        {1, 6, 4, 3, 1, 4, 1, 3},
+        {1, 6, 3, 4, 1, 3, 1, 4},
+        {1, 6, 2, 5, 1, 2, 1, 5},
+        {1, 6, 1, 6, 1, 1, 1, 6},
+        {1, 6, 0, 7, 1, 0, 0, 6},
+        {0, 7, 7, 0, 0, 7, 0, 0},
+        {0, 7, 6, 1, 0, 6, 0, 1},
+        {0, 7, 5, 2, 0, 5, 0, 2},
+        {0, 7, 4, 3, 0, 4, 0, 3},
+        {0, 7, 3, 4, 0, 3, 0, 4},
+        {0, 7, 2, 5, 0, 2, 0, 5},
+        {0, 7, 1, 6, 0, 1, 0, 6},
+        {0, 7, 0, 7, 0, 0, 0, 7},
+    };
 
     uint8_t castling_rights = 0b0000; // KQkq
     int enpassant_place = -1;
@@ -57,7 +123,7 @@ class Board {
 
     void PrintBoard ();
     void LoadBoard (const char* FEN);
-    void RestartBoard();
+    void RestartBoard(const char* position = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
     inline bool IsWhiteToPlay () { return color_to_play == WHITE; };
     inline bool IsEnemyPiece (Piece p) { return p & (SwitchColor(color_to_play)); }
@@ -74,57 +140,12 @@ class Board {
 
     void ExecuteMove    (Move);
     void UndoMove       (Move);
-    void HandlePawnMove (Piece, Move);
 
     static int FullMovesToHalfMoves (int, bool);
     static int HalfMovesToFullMoves (int);
     static int NotationToBoardIndex (int, char);
     static int NotationToBoardIndex (int, int);
-    void PreCalculateDistancesToEdgeOfBoard ();
 };
-
-// old game tracker
-// class GameTracker
-// {
-// private:
-//     std::vector<Move> move_history;
-//     //std::list<Move>::iterator curr_pos;
-//     //uint8_t init_state_summary;
-//     std::string start_pos; //FEN
-//     //Board *board;
-
-// public:
-//     //GameTracker(Board *board);
-//     //GameTracker(Board *board, std::string FEN);
-//     //GameTracker();
-
-//     size_t MovesCount();
-//     bool IsEmpty();
-
-//     void ImportPGN(std::string);
-//     std::string ExportPGN();
-//     void PrintTracker ();
-//     /*
-//     * NewMove Inset new move 
-//     * Pre : This must be the last move played
-//     */
-//     void PushMove(Move mv);
-//     void UndoMove();
-//     void ResetTracker();
-//     //void SetFEN(std::string  FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" );
-//     //void SetFEN();
-
-//     // // Moves stuff
-//     // void Prev();
-//     // void Next();
-//     // /*
-//     // * GoToMove change the board state to MoveNumber state
-//     // * MoveNumber must be an intger value which (MoveNumber >= 0 && MoveNumber < MovesCount)
-//     // */
-//     // void GoToMove(int move_num);
-//     // bool IsLastMove();
-//     // bool IsFirstMove();
-// };
 
 class HelperClass {
 public:

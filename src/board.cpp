@@ -11,20 +11,22 @@
 
 // Board
 
-Board::Board () {
-    PreCalculateDistancesToEdgeOfBoard();
-}
-
 // TODO: convert current position to FEN string
 void Board::PrintBoard () {
     // DOESN'T WORK AS INTENDED ANYMORE
-    for (int index = 0; index < 64; ++index) {
-        if (!(index % 8)) std::cout << std::endl;
-        std::cout << '[' << PieceToChar(squares[index]) << ']';
-    }
+    printf("\nColor to play: %c\nCastling rights: %d\nEn passant: %d\n50 move clock: %d\nFull move counter: %d\n",
+        IsWhiteToPlay()? 'w' : 'b',
+        castling_rights,
+        enpassant_place,
+        fifty_move_rule,
+        HalfMovesToFullMoves(half_moves));
 }
 
 void Board::LoadBoard (const char* FEN) {
+    for (Piece &p : squares) {
+        p = EMPTY;
+    }
+
     size_t index = 64 - 8;
     int stage = 0;
 
@@ -70,28 +72,19 @@ void Board::LoadBoard (const char* FEN) {
                 enpassant_place = NotationToBoardIndex(HelperClass::ToDigit(*FEN), c);
             } break;
             case 4: {
-                printf("FEN: %c\n", *FEN);
                 fifty_move_rule = HelperClass::GetNumberFromPointer(FEN - 1);
             } break;
             case 5: {
                 half_moves = FullMovesToHalfMoves(HelperClass::GetNumberFromPointer(FEN - 1), IsWhiteToPlay());
-            }
-            case 6: {
-                printf("Loaded game:\nColor to play: %c\nCastling rights: %d\nEn passant: %d\n50 move clock: %d\nFull move counter: %d\n",
-                IsWhiteToPlay()? 'w' : 'b',
-                castling_rights,
-                enpassant_place,
-                fifty_move_rule,
-                HalfMovesToFullMoves(half_moves));
             } break;
         }
     }
 }
 
 
-void Board::RestartBoard() {
+void Board::RestartBoard (const char* position) {
     tracker.ResetTracker();
-    LoadBoard(CUSTOM_POS);
+    LoadBoard(position);
     move_set = GetLegalMoves();
 }
 
@@ -293,6 +286,8 @@ std::vector<Move> Board::GetAllMoves () {
     return moves;
 }
 
+// TODO: Optimize by applying pins and
+// keeping track of attacked squares
 std::vector<Move> Board::GetLegalMoves () {
     std::vector<Move> moves = GetAllMoves();
 
@@ -313,6 +308,7 @@ bool Board::IsInCheck () {
     return IsWhiteToPlay()? IsSquareAttacked(white_king_pos) : IsSquareAttacked(black_king_pos);
 }
 
+// TODO: Optimize
 bool Board::IsSquareAttacked (int square_index) {
     color_to_play = SwitchColor(color_to_play);
     std::vector<Move> OppMoves = GetAllMoves();
@@ -464,55 +460,31 @@ int Board::FullMovesToHalfMoves (int full_moves, bool isWhiteToPlay) {
     return (full_moves * 2) - ((isWhiteToPlay)? 2 : 1);
 }
 
-void Board::PreCalculateDistancesToEdgeOfBoard () {
-    for (int rank = 0; rank < 8; ++rank) {
-        for (int file = 0; file < 8; ++file) {
-            int north = rank;
-            int south = 7 - rank;
-            int east = 7 - file;
-            int west = file;
+// Function that was used to calculate distances_to_edge[][] array.
+//
+// void Board::PreCalculateDistancesToEdgeOfBoard () {
+//     for (int rank = 0; rank < 8; ++rank) {
+//         for (int file = 0; file < 8; ++file) {
+//             int north = rank;
+//             int south = 7 - rank;
+//             int east = 7 - file;
+//             int west = file;
 
-            int* dte = distance_to_edge[NotationToBoardIndex(rank, file)];
+//             int* dte = distance_to_edge[NotationToBoardIndex(rank, file)];
 
-            dte[0] = south;
-            dte[1] = north;
-            dte[2] = east;
-            dte[3] = west;
-            dte[4] = std::min(south, west);
-            dte[5] = std::min(north, east);
-            dte[6] = std::min(south, east);
-            dte[7] = std::min(north, west);
-        }
-    }
-}
-
-// ====================   Game Tracker   =========================== //
-
-// GameTracker::GameTracker(){
-//     curr_pos = Moves.end();
-//     init_state_summary = 0b00000000;
+//             dte[0] = south;
+//             dte[1] = north;
+//             dte[2] = east;
+//             dte[3] = west;
+//             dte[4] = std::min(south, west);
+//             dte[5] = std::min(north, east);
+//             dte[6] = std::min(south, east);
+//             dte[7] = std::min(north, west);
+//         }
+//     }
 // }
 
-/* i dont think we'll need a reference to the board here
-GameTracker::GameTracker(Board *board): GameTracker(){
-    this->board = board;
-    this->SetFEN();
-}
-
-GameTracker::GameTracker(Board *board , std::string FEN): GameTracker(){
-    this->board = board;
-    this->SetFEN(FEN);
-}
-
-void GameTracker::SetFEN(std::string FEN){
-    ResetTracker();
-    start_pos = FEN;
-    this->board->LoadBoard(FEN.c_str());
-}
-*/
-
-
-
+// ====================   Game Tracker   =========================== //
 
 size_t GameTracker::MovesCount() {
     return (move_history.size());
@@ -540,29 +512,6 @@ void GameTracker::PrintTracker () {
         printf("%x\n", m);
     }
 }
-
-
-/* At least for now we won't need to track WHERE we are on the list
-void GameTracker::Prev () {
-
-}
-
-void GameTracker::Next () {
-
-}
-
-void GameTracker::GoToMove (int MoveNumber) {
-
-}
-
-bool GameTracker::IsLastMove () {
-    return curr_pos == Moves.rbegin().base();
-}
-
-bool GameTracker::IsFirstMove () {
-    return curr_pos == Moves.begin();
-}
-*/
 
 void GameTracker::PushMove(Move mv) {
     move_history.push_back(mv);

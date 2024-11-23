@@ -123,6 +123,12 @@ void InitializeHighlightMatrix () {
     }
 }
 
+void FreeHighlightMatrix () {
+    for (int i = 0; i < 64; ++i) {
+        free(highlight_matrix[i]);
+    }
+}
+
 void FillHighlightMatrix () {
     for (int i = 0; i < 64; ++i) {
         highlight_matrix[i]->clear();
@@ -344,16 +350,20 @@ void Init (Board* _board) {
     InitRects();
 
     //components
-    Components::arrow_png = arrow_png;
-    Components::renderer  = renderer;
+    // Components::arrow_png = arrow_png;
+    // Components::renderer  = renderer;
 
-    Components::components.push(new Components::NextBtn(0, 0, &controls));
+    // Components::components.push(new Components::NextBtn(0, 0, &controls));
 }
 
 void Shutdown () {
-    IMG_Quit();
+    FreeHighlightMatrix();
+
     SDL_DestroyTexture(pieces_png);
     SDL_DestroyTexture(arrow_png);
+    SDL_DestroyTexture(promo_tip_png);
+    IMG_Quit();
+
     TTF_CloseFont(ConsolaFont);
     TTF_Quit();
     
