@@ -1,5 +1,8 @@
 // TODO:
-//      Make object files for faster building of project 
+//      Make object files for faster building of project
+//      Make a helper function that takes a board index and transforms it to UCI notation ie c6
+//      Make a helper function that takes a move and transforms it to UCI notation ie a2a3
+//      Add sound to GUI
 
 #include <iostream>
 
@@ -90,9 +93,23 @@ uint64_t Perft (int depth) {
 }
 
 void StartPerft (int max_depth) {
+    board.RestartBoard();
+
     for (int i = 1; i <= max_depth; ++i) {
-        board.RestartBoard();
         printf("Nodes reached at %d ply: %llu\n", i, Perft(i)); 
+    }
+}
+
+void StartDivPerft (int max_depth) {
+    board.RestartBoard();
+
+    std::vector<Move> move_list;
+    move_list = board.GetLegalMoves();
+
+    for (Move m : move_list) {
+        board.ExecuteMove(m);
+        printf("%x: %llu\n", m, Perft(max_depth - 1));
+        board.UndoMove(m);
     }
 }
 
@@ -113,6 +130,9 @@ int main (int argc, char** args) {
             } else if (command == "perft") {
                 std::cin >> argument;
                 StartPerft(HelperClass::GetNumberFromPointer(argument.c_str()));
+            } else if (command == "divide") {
+                std::cin >> argument;
+                StartDivPerft(HelperClass::GetNumberFromPointer(argument.c_str()));
             } else if (command == "position") {
                 ChangePosition();
             } else if (command == "help") {
