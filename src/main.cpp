@@ -93,7 +93,9 @@ uint64_t Perft (int depth) {
 }
 
 void StartPerft (int max_depth) {
-    board.RestartBoard();
+    if (position[0] == 'X')
+         board.RestartBoard();
+    else board.RestartBoard(position);
 
     for (int i = 1; i <= max_depth; ++i) {
         printf("Nodes reached at %d ply: %llu\n", i, Perft(i)); 
@@ -101,7 +103,9 @@ void StartPerft (int max_depth) {
 }
 
 void StartDivPerft (int max_depth) {
-    board.RestartBoard();
+    if (position[0] == 'X')
+         board.RestartBoard();
+    else board.RestartBoard(position);
 
     std::vector<Move> move_list;
     move_list = board.GetLegalMoves();
@@ -115,7 +119,7 @@ void StartDivPerft (int max_depth) {
         board.UndoMove(m);
     }
 
-    printf("\nCombined: %llu", combined);
+    printf("\nCombined: %llu\n", combined);
 }
 
 int main (int argc, char** args) {
