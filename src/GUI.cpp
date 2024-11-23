@@ -1,70 +1,20 @@
-#include "board.hpp"
-#include "Components.cpp"
-
-#include "SDL2/SDL.h"
-#include "SDL2/SDL_image.h"
-#include "SDL2/SDL_ttf.h"
+#include "GUI.hpp"
+// #include "Components.cpp" UNDER DEVELOPMENT
 
 #include <iostream>
 #include <algorithm>
 #include <unordered_map>
 
-#define WINDOW_W 1400
-#define WINDOW_H 700
+GUI::GUI (Board* board) {
+    Init(board);
+    running = true;
+}
 
-#define BackgroundColor /*r*/22,/*g*/ 21,/*b*/18, /*a*/255
+GUI::~GUI () {
+    Shutdown();
+}
 
-namespace GUI {
-
-Board* board;
-
-SDL_Window*  window;
-SDL_Renderer* renderer;
-
-// TEXTURES
-SDL_Texture* pieces_png;
-SDL_Texture* arrow_png;
-SDL_Texture* promo_tip_png;
-
-// RECTS
-SDL_Rect BoardRect;
-SDL_Rect promotion_tip;
-SDL_Rect controls;
-
-// COLORS
-SDL_Color WhiteSquareColor = {.r = 240 , .g = 217 , .b = 181 ,.a = 255};
-SDL_Color BlackSquareColor = {.r = 181 , .g = 136 , .b = 99 ,.a = 255};
-SDL_Color HighlightColor = {.r = 255 , .g = 255 , .b = 0 ,.a = 90};
-
-// FONTS
-TTF_Font *ConsolaFont;
-
-
-class PosMove {
-    public:
-    int position;
-    int index;
-
-    PosMove (int _ind, int _pos) {
-        position = _pos;
-        index = _ind;
-    }
-
-    bool operator == (const int _pm) {
-        return _pm == position;
-    }
-};
-
-std::vector<Move>* move_set = nullptr;
-std::vector<PosMove>* highlight_matrix[64];
-int selected_square = -1;
-bool is_user_promoting = false;
-int promotion_index = 0;
-
-// TODO: make GUI.hpp
-bool IsSelected();
-
-void DrawPieceInside (SDL_Rect & dest, int rank, int file) {
+void GUI::DrawPieceInside (SDL_Rect & dest, int rank, int file) {
     SDL_Rect rect;
     
     int curr_piece = board->squares[Board::NotationToBoardIndex(rank, file)];
@@ -81,7 +31,7 @@ void DrawPieceInside (SDL_Rect & dest, int rank, int file) {
     SDL_RenderCopy(renderer, pieces_png, &rect, &dest);
 }
 
-void DrawChessSquare (SDL_Color Color, int rank /*y-axis*/, int file /*x-axis*/){
+void GUI::DrawChessSquare (SDL_Color Color, int rank /*y-axis*/, int file /*x-axis*/) {
     SDL_Rect SquareRect;
     SquareRect.w = BoardRect.w / 8;
     SquareRect.h = BoardRect.h / 8;
@@ -99,7 +49,7 @@ void DrawChessSquare (SDL_Color Color, int rank /*y-axis*/, int file /*x-axis*/)
     DrawPieceInside(SquareRect, rank, file);
 }
 
-void RenderBoard () {
+void GUI::RenderBoard () {
     bool IsSquareWhite = false;
 
     for (int rank = 0; rank < 8; ++rank) {
@@ -117,19 +67,19 @@ void RenderBoard () {
     }
 }
 
-void InitializeHighlightMatrix () {
+void GUI::InitializeHighlightMatrix () {
     for (int i = 0; i < 64; ++i) {
         highlight_matrix[i] = new std::vector<PosMove>;
     }
 }
 
-void FreeHighlightMatrix () {
+void GUI::FreeHighlightMatrix () {
     for (int i = 0; i < 64; ++i) {
-        free(highlight_matrix[i]);
+        delete highlight_matrix[i];
     }
 }
 
-void FillHighlightMatrix () {
+void GUI::FillHighlightMatrix () {
     for (int i = 0; i < 64; ++i) {
         highlight_matrix[i]->clear();
     }
@@ -144,19 +94,19 @@ void FillHighlightMatrix () {
     }
 }
 
-bool IsSelected () {
+bool GUI::IsSelected () {
     return selected_square != -1;
 }
 
-void Deselect () {
+void GUI::Deselect () {
     selected_square = -1;
 }
 
-void Select (int square) {
+void GUI::Select (int square) {
     selected_square = square;
 }
 
-void ExecutePromotion (int promotion_offset) {
+void GUI::ExecutePromotion (int promotion_offset) {
     if (is_user_promoting) {
         is_user_promoting = false;
         board->ExecuteMove(move_set->at(promotion_index + promotion_offset));
@@ -166,12 +116,12 @@ void ExecutePromotion (int promotion_offset) {
     }
 }
 
-void GiveUserPromotionChoice (int move_index) {
+void GUI::GiveUserPromotionChoice (int move_index) {
     is_user_promoting = true;
     promotion_index = move_index;
 }
 
-void UndoUserMove () {
+void GUI::UndoUserMove () {
     if (board->tracker.IsEmpty()) return;
     Deselect();
     board->UndoMove(board->tracker.GetCurrMove());
@@ -179,7 +129,7 @@ void UndoUserMove () {
     FillHighlightMatrix();
 }
 
-void HandleBoardClick (int x, int y){
+void GUI::HandleBoardClick (int x, int y) {
     int rank = abs(y - BoardRect.y - BoardRect.h) / (BoardRect.h / 8);
     int file = (x - BoardRect.x) / (BoardRect.w / 8);
 
@@ -212,7 +162,7 @@ void HandleBoardClick (int x, int y){
     }
 }
 
-void Click (int x, int y) {
+void GUI::Click (int x, int y) {
 
     if (is_user_promoting) return;
 
@@ -225,7 +175,7 @@ void Click (int x, int y) {
     HandleBoardClick(x,y);
 }
 
-void DrawArrow(int relevant_x ,int relevant_y ,bool is_to_right , SDL_Rect &parent){
+void GUI::DrawArrow(int relevant_x ,int relevant_y ,bool is_to_right , SDL_Rect &parent) {
     SDL_Rect dest_rect;
     dest_rect.x = relevant_x + parent.x      ;
     dest_rect.y = relevant_y + parent.y      ;
@@ -238,7 +188,7 @@ void DrawArrow(int relevant_x ,int relevant_y ,bool is_to_right , SDL_Rect &pare
 
 }
 
-void RenderBoardRightSide () {
+void GUI::RenderBoardRightSide () {
     DrawArrow(0, 0, false, controls);
     if (is_user_promoting) SDL_RenderCopy(renderer, promo_tip_png, NULL, &promotion_tip);
 
@@ -246,7 +196,7 @@ void RenderBoardRightSide () {
 //    SDL_RenderFillRect(renderer, &controlles);
 }
 
-void GUI () {
+void GUI::ShowFrame () {
     SDL_SetRenderDrawColor(renderer, BackgroundColor);
     SDL_RenderClear(renderer);
     RenderBoard();
@@ -254,7 +204,7 @@ void GUI () {
     SDL_RenderPresent(renderer);
 }
 
-void InitRects () {
+void GUI::InitRects () {
     {
         BoardRect.w = std::min(WINDOW_W, WINDOW_H);
         BoardRect.h = BoardRect.w;
@@ -277,7 +227,7 @@ void InitRects () {
     }
 }
 
-void InitTextures () {
+void GUI::InitTextures () {
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
     pieces_png = IMG_LoadTexture(renderer, "assets/imgs/pieces.png");
@@ -294,7 +244,7 @@ void InitTextures () {
     }
 }
 
-void Init (Board* _board) {
+void GUI::Init (Board* _board) {
     board = _board;
     move_set = &_board->move_set;
     InitializeHighlightMatrix();
@@ -356,7 +306,7 @@ void Init (Board* _board) {
     // Components::components.push(new Components::NextBtn(0, 0, &controls));
 }
 
-void Shutdown () {
+void GUI::Shutdown () {
     FreeHighlightMatrix();
 
     SDL_DestroyTexture(pieces_png);
@@ -370,6 +320,4 @@ void Shutdown () {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-}
-
 }

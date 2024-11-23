@@ -5,16 +5,16 @@
 
 #include "SDL2/SDL.h"
 #include "board.hpp"
-#include "GUI.cpp"
+#include "GUI.hpp"
 
 const int framerate = 30;
 const int target_delta = 1000 / framerate;
 Uint32 start_frame;
 int frame_delta;
+GUI* GUI_instance;
 
 Board board;
 char position[90] = "X"; // "X" means startpos
-bool running = true;
 
 void HandleEvents () {
     SDL_Event event;
@@ -22,16 +22,16 @@ void HandleEvents () {
 
     switch (event.type) {
         case SDL_QUIT:
-            running = false;
+            GUI_instance->running = false;
             break;
         case SDL_MOUSEBUTTONDOWN:
-            GUI::Click(event.button.x, event.button.y);
+            GUI_instance->Click(event.button.x, event.button.y);
             break;
         case SDL_KEYDOWN:
             if (event.key.keysym.sym >= SDLK_1 && event.key.keysym.sym <= SDLK_4) {
-                GUI::ExecutePromotion(event.key.keysym.sym - SDLK_1);
+                GUI_instance->ExecutePromotion(event.key.keysym.sym - SDLK_1);
             } else if (event.key.keysym.sym == SDLK_LEFT) {
-                GUI::UndoUserMove();
+                GUI_instance->UndoUserMove();
             }
             break;
         default:
@@ -48,27 +48,26 @@ void ChangePosition () {
 }
 
 void StartGame () {
-    GUI::Init(&board);
-    running = true;
+    GUI_instance = new GUI(&board);
 
     if (position[0] == 'X')
          board.RestartBoard();
     else board.RestartBoard(position);
 
     board.PrintBoard();
-    GUI::FillHighlightMatrix();
+    GUI_instance->FillHighlightMatrix();
 
-    while (running) {
+    while (GUI_instance->running) {
         start_frame = SDL_GetTicks();
 
         HandleEvents();
-        GUI::GUI();
+        GUI_instance->ShowFrame();
 
         frame_delta = SDL_GetTicks();
         if (frame_delta < target_delta) SDL_Delay(target_delta - frame_delta);
     }
 
-    GUI::Shutdown();
+    delete GUI_instance;
 }
 
 uint64_t Perft (int depth) {
@@ -83,8 +82,6 @@ uint64_t Perft (int depth) {
     n_moves = move_list.size();
     for (i = 0; i < n_moves; i++) {
         board.ExecuteMove(move_list[i]);
-        // GUI::GUI();
-        // SDL_Delay(100);
         nodes += Perft(depth - 1);
         board.UndoMove(move_list[i]);
     }
