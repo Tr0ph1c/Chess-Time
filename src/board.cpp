@@ -192,6 +192,7 @@ std::vector<Move> Board::GetAllMoves () {
                         K = false;
                         break;
                     }
+                    if (IsSquareAttacked(squares[WKSC_SQUARE] - 1)) K = false;
                     if (K) moves.push_back(CreateMove(start_square, WKSC_SQUARE, CASTLE_KS, change_castle_rights));
                 }
                 if (castling_rights & 0b0100) {
@@ -200,6 +201,7 @@ std::vector<Move> Board::GetAllMoves () {
                         Q = false;
                         break;
                     }
+                    if (IsSquareAttacked(squares[WQSC_SQUARE] + 1)) Q = false;
                     if (Q) moves.push_back(CreateMove(start_square, WQSC_SQUARE, CASTLE_QS, change_castle_rights));
                 }
             } else {
@@ -209,6 +211,7 @@ std::vector<Move> Board::GetAllMoves () {
                         K = false;
                         break;
                     }
+                    if (IsSquareAttacked(squares[BKSC_SQUARE] - 1)) K = false;
                     if (K) moves.push_back(CreateMove(start_square, BKSC_SQUARE, CASTLE_KS, change_castle_rights));
                 }
                 if (castling_rights & 0b0001) {
@@ -217,6 +220,7 @@ std::vector<Move> Board::GetAllMoves () {
                         Q = false;
                         break;
                     }
+                    if (IsSquareAttacked(squares[BQSC_SQUARE] + 1)) Q = false;
                     if (Q) moves.push_back(CreateMove(start_square, BQSC_SQUARE, CASTLE_QS, change_castle_rights));
                 }
             }
@@ -308,14 +312,31 @@ bool Board::IsInCheck () {
     return IsWhiteToPlay()? IsSquareAttacked(white_king_pos) : IsSquareAttacked(black_king_pos);
 }
 
-// TODO: Optimize
 bool Board::IsSquareAttacked (int square_index) {
-    color_to_play = SwitchColor(color_to_play);
-    std::vector<Move> OppMoves = GetAllMoves();
-    color_to_play = SwitchColor(color_to_play);
+    Piece opp_color = SwitchColor(color_to_play);
 
-    for (Move m : OppMoves) {
-        if (GetFinalPos(m) == square_index) return true;
+    for (int m : knight_moves) {
+        if (squares[square_index + m] == (KNIGHT | opp_color)) return true;
+    }
+
+    for (int diri = 0; diri < 8; ++diri) {
+        for (int i = 0; i < distance_to_edge[square_index][diri]; ++i) {
+            Piece next_square = squares[square_index + (directions[diri] * (i + 1))];
+            if (IsOfColor(next_square, color_to_play)) break;
+            else if (IsOfColor(next_square, opp_color)) {
+                Piece ptype = RawPiece(next_square);
+
+                if ( (ptype == QUEEN) ||
+                     (ptype == ROOK && diri < 4) ||
+                     (ptype == BISHOP && diri >= 4) ||
+                     (ptype == KING && i == 0) ||
+                     (next_square == B_PAWN && i == 0 && (directions[diri] == 7 || directions[diri] == 9)) ||
+                     (next_square == W_PAWN && i == 0 && (directions[diri] == -7 || directions[diri] == -9))
+                ) {
+                    return true;
+                }
+            }
+        }
     }
 
     return false;

@@ -128,6 +128,7 @@ class Board {
     inline bool IsWhiteToPlay () { return color_to_play == WHITE; };
     inline bool IsEnemyPiece (Piece p) { return p & (SwitchColor(color_to_play)); }
     inline bool IsAllyPiece (Piece p) { return p & color_to_play; }
+    inline bool IsOfColor   (Piece p, Piece col) { return p & col; }
     inline bool EnPassantExists () { return enpassant_place != -1; }
 
     void EndTurn ();
