@@ -18,6 +18,7 @@
     * `position [FEN/X]` : sets the `position` to `[FEN]`, only accepts valid [FEN strings](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation) OR "X" for the standard starting chess position.
     * `start`            : starts a GUI board with the position from `position`.
     * `perft [depth]`    : starts an iterative [perft test](https://www.chessprogramming.org/Perft) starting from `position` till `[depth]` and prints the results.
+    * `divide [depth]`   : outputs the perft result for the sub-tree of each move in the current position. 
 - GUI:
     * Any click can be initiated using mouse0 or mouse1.
     * Click to select a piece, click on a square to move the selected piece to the clicked square.

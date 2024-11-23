@@ -105,12 +105,17 @@ void StartDivPerft (int max_depth) {
 
     std::vector<Move> move_list;
     move_list = board.GetLegalMoves();
+    uint64_t combined = 0;
 
     for (Move m : move_list) {
         board.ExecuteMove(m);
-        printf("%s: %llu\n", GetNotationFromMove(m).c_str(), Perft(max_depth - 1));
+        uint64_t curr_perft = Perft(max_depth - 1);
+        combined += curr_perft;
+        printf("%s: %llu\n", GetNotationFromMove(m).c_str(), curr_perft);
         board.UndoMove(m);
     }
+
+    printf("\nCombined: %llu", combined);
 }
 
 int main (int argc, char** args) {
