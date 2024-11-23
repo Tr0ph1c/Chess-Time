@@ -108,7 +108,7 @@ void StartDivPerft (int max_depth) {
 
     for (Move m : move_list) {
         board.ExecuteMove(m);
-        printf("%x: %llu\n", m, Perft(max_depth - 1));
+        printf("%s: %llu\n", GetNotationFromMove(m).c_str(), Perft(max_depth - 1));
         board.UndoMove(m);
     }
 }

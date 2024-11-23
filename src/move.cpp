@@ -59,5 +59,5 @@ Piece GetCapturedPieceFromMove (Move m) {
 
 std::string GetNotationFromMove (Move m) {
     std::string s;
-    return  s + (char)(GetStartPos(m) % 8 + 'a') + std::to_string(GetStartPos(m) / 8 + 1) + " -> " + (char)(GetFinalPos(m) % 8 + 'a') + std::to_string(GetFinalPos(m) / 8 + 1);
+    return  s + (char)(GetStartPos(m) % 8 + 'a') + std::to_string(GetStartPos(m) / 8 + 1) + (char)(GetFinalPos(m) % 8 + 'a') + std::to_string(GetFinalPos(m) / 8 + 1);
 }
