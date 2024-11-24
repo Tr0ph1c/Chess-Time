@@ -113,7 +113,7 @@ class Board {
         {0, 7, 0, 7, 0, 0, 0, 7},
     };
 
-    uint8_t castling_rights = 0b0000; // KQkq
+    uint8_t castling_rights = 0; // KQkq
     int enpassant_place = -1;
     Piece color_to_play = WHITE;
     int half_moves = 0;

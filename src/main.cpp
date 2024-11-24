@@ -73,17 +73,25 @@ void StartGame () {
     delete GUI_instance;
 }
 
-uint64_t Perft (int depth) {
-    std::vector<Move> move_list;
-    size_t n_moves, i;
-    uint64_t nodes = 0;
+size_t Perft (int depth) {
+    if (!depth) return 1ULL;
 
-    if (depth == 0) 
-        return 1ULL;
+    std::vector<Move> move_list;
+    size_t n_moves = 0, i = 0;
+    size_t nodes = 0;
 
     move_list = board.GetLegalMoves();
-    n_moves = move_list.size();
-    for (i = 0; i < n_moves; i++) {
+    for (Move m : move_list) {
+        if (IsNullMove(m)) continue;
+        n_moves++;
+    }
+
+    if (depth == 1) 
+        return n_moves;
+    
+    for (i = 0; i < move_list.size(); i++) {
+        if (IsNullMove(move_list[i])) continue;
+
         board.ExecuteMove(move_list[i]);
         nodes += Perft(depth - 1);
         board.UndoMove(move_list[i]);
@@ -109,11 +117,13 @@ void StartDivPerft (int max_depth) {
 
     std::vector<Move> move_list;
     move_list = board.GetLegalMoves();
-    uint64_t combined = 0;
+    size_t combined = 0;
 
     for (Move m : move_list) {
+        if (IsNullMove(m)) continue;
+
         board.ExecuteMove(m);
-        uint64_t curr_perft = Perft(max_depth - 1);
+        size_t curr_perft = Perft(max_depth - 1);
         combined += curr_perft;
         printf("%s: %llu\n", GetNotationFromMove(m).c_str(), curr_perft);
         board.UndoMove(m);

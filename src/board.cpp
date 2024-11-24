@@ -43,7 +43,11 @@ void Board::LoadBoard (const char* FEN) {
                 } else if (isdigit(c)) {
                     index += c - '0'; // from char to int (jump number of files)
                 } else {
-                    squares[index++] = CharToPiece(c);
+                    Piece _p = CharToPiece(c);
+                    // setting king positions from fen string
+                    if      (_p == W_KING) white_king_pos = index;
+                    else if (_p == B_KING) black_king_pos = index;
+                    squares[index++] = _p;
                 }
             } break;
             case 1: {
@@ -102,6 +106,7 @@ void Board::EndTurn () {
 
 std::vector<Move> Board::GetAllMoves () {
     std::vector<Move> moves;
+    uint8_t curr_castle_rights = castling_rights;
 
     for (int start_square = 0; start_square < 64; ++start_square) {
         Piece _piece = squares[start_square];
@@ -116,33 +121,20 @@ std::vector<Move> Board::GetAllMoves () {
         if (IsSlidingPiece(_piece)) {
             int diri = 0;
             int diri_max = 8;
-            uint8_t change_castling_rights = PR_CAS;
 
             if (_raw == ROOK) diri_max = 4;
             else if (_raw == BISHOP) diri = 4;
-
-            if (_raw == ROOK && castling_rights) {
-                if (start_square == 7) {
-                    change_castling_rights = 0b0111;
-                } else if (start_square == 0) {
-                    change_castling_rights = 0b1011;
-                } else if (start_square == 63) {
-                    change_castling_rights = 0b1101;
-                } else if (start_square == 56) {
-                    change_castling_rights = 0b1110;
-                }
-            }
 
             for (; diri < diri_max; ++diri) {
                 for (int i = 0; i < distance_to_edge[start_square][diri]; ++i) {
                     int next_square = start_square + (directions[diri] * (i + 1));
                     
                     if (squares[next_square] == EMPTY) {
-                        moves.push_back(CreateMove(start_square, next_square, QUIET_MOVE, change_castling_rights));
+                        moves.push_back(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights));
                     } else if (IsAllyPiece(squares[next_square])) {
                         break;
                     } else if (IsEnemyPiece(squares[next_square])) {
-                        moves.push_back(CreateMove(start_square, next_square, CAPTURE_MOVE, change_castling_rights, squares[next_square]));
+                        moves.push_back(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]));
                         break;
                     }
                 }
@@ -155,18 +147,16 @@ std::vector<Move> Board::GetAllMoves () {
                 if (next_square >= 0 && next_square < 64) { // Make sure its on the board
                     if (abs(start_file - next_file) < 3) {  // Make sure no warping
                         if (squares[next_square] == EMPTY) {
-                            moves.push_back(CreateMove(start_square, next_square, QUIET_MOVE));
+                            moves.push_back(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights));
                         } else if (IsAllyPiece(squares[next_square])) {
                             continue;
                         } else if (IsEnemyPiece(squares[next_square])) {
-                            moves.push_back(CreateMove(start_square, next_square, CAPTURE_MOVE, PR_CAS, squares[next_square]));
+                            moves.push_back(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]));
                         }
                     }
                 }
             }
         } else if (_raw == KING) {
-            uint8_t change_castle_rights = (IsWhiteToPlay())? 0b0011 : 0b1100;
-
             for (int dir = 0; dir < 8; ++dir) {
                 int next_square = start_square + directions[dir];
                 int next_file = next_square % 8;
@@ -174,17 +164,18 @@ std::vector<Move> Board::GetAllMoves () {
                 if (next_square >= 0 && next_square < 64) {
                     if (abs(start_file - next_file) < 2) {
                         if (squares[next_square] == EMPTY) {
-                            moves.push_back(CreateMove(start_square, next_square, QUIET_MOVE, change_castle_rights));
+                            moves.push_back(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights));
                         } else if (IsAllyPiece(squares[next_square])) {
                             continue;
                         } else if (IsEnemyPiece(squares[next_square])) {
-                            moves.push_back(CreateMove(start_square, next_square, CAPTURE_MOVE, change_castle_rights, squares[next_square]));
+                            moves.push_back(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]));
                         }
                     }   
                 }
             }
 
             bool K = true, Q = true;
+            if (!IsInCheck()) {
             if (IsWhiteToPlay()) {
                 if (castling_rights & 0b1000) {
                     for (uint8_t s : white_kingside) {
@@ -192,8 +183,8 @@ std::vector<Move> Board::GetAllMoves () {
                         K = false;
                         break;
                     }
-                    if (IsSquareAttacked(squares[WKSC_SQUARE] - 1)) K = false;
-                    if (K) moves.push_back(CreateMove(start_square, WKSC_SQUARE, CASTLE_KS, change_castle_rights));
+                    if (IsSquareAttacked(WKSC_SQUARE - 1)) K = false;
+                    if (K) moves.push_back(CreateMove(start_square, WKSC_SQUARE, CASTLE_KS, curr_castle_rights));
                 }
                 if (castling_rights & 0b0100) {
                     for (uint8_t s : white_queenside) {
@@ -201,8 +192,8 @@ std::vector<Move> Board::GetAllMoves () {
                         Q = false;
                         break;
                     }
-                    if (IsSquareAttacked(squares[WQSC_SQUARE] + 1)) Q = false;
-                    if (Q) moves.push_back(CreateMove(start_square, WQSC_SQUARE, CASTLE_QS, change_castle_rights));
+                    if (IsSquareAttacked(WQSC_SQUARE + 1)) Q = false;
+                    if (Q) moves.push_back(CreateMove(start_square, WQSC_SQUARE, CASTLE_QS, curr_castle_rights));
                 }
             } else {
                 if (castling_rights & 0b0010) {
@@ -211,8 +202,8 @@ std::vector<Move> Board::GetAllMoves () {
                         K = false;
                         break;
                     }
-                    if (IsSquareAttacked(squares[BKSC_SQUARE] - 1)) K = false;
-                    if (K) moves.push_back(CreateMove(start_square, BKSC_SQUARE, CASTLE_KS, change_castle_rights));
+                    if (IsSquareAttacked(BKSC_SQUARE - 1)) K = false;
+                    if (K) moves.push_back(CreateMove(start_square, BKSC_SQUARE, CASTLE_KS, curr_castle_rights));
                 }
                 if (castling_rights & 0b0001) {
                     for (uint8_t s : black_queenside) {
@@ -220,9 +211,10 @@ std::vector<Move> Board::GetAllMoves () {
                         Q = false;
                         break;
                     }
-                    if (IsSquareAttacked(squares[BQSC_SQUARE] + 1)) Q = false;
-                    if (Q) moves.push_back(CreateMove(start_square, BQSC_SQUARE, CASTLE_QS, change_castle_rights));
+                    if (IsSquareAttacked(BQSC_SQUARE + 1)) Q = false;
+                    if (Q) moves.push_back(CreateMove(start_square, BQSC_SQUARE, CASTLE_QS, curr_castle_rights));
                 }
+            }
             }
         } else if (_raw == PAWN) {
             short dir = (IsWhiteToPlay())? 1 : -1;
@@ -238,14 +230,14 @@ std::vector<Move> Board::GetAllMoves () {
                     // and should not be altered in any way shape or form.
                     // This may not be the best way to create a structure that user input
                     // relies on but is what we got for now.
-                    moves.push_back(CreateMove(start_square, forward_square, PROMO_QUEEN));
-                    moves.push_back(CreateMove(start_square, forward_square, PROMO_BISHOP));
-                    moves.push_back(CreateMove(start_square, forward_square, PROMO_KNIGHT));
-                    moves.push_back(CreateMove(start_square, forward_square, PROMO_ROOK));
+                    moves.push_back(CreateMove(start_square, forward_square, PROMO_QUEEN, curr_castle_rights));
+                    moves.push_back(CreateMove(start_square, forward_square, PROMO_BISHOP, curr_castle_rights));
+                    moves.push_back(CreateMove(start_square, forward_square, PROMO_KNIGHT, curr_castle_rights));
+                    moves.push_back(CreateMove(start_square, forward_square, PROMO_ROOK, curr_castle_rights));
                 } else {
-                    moves.push_back(CreateMove(start_square, forward_square, QUIET_MOVE));
+                    moves.push_back(CreateMove(start_square, forward_square, QUIET_MOVE, curr_castle_rights));
                     if (is_first_move && squares[start_square + dir*16] == EMPTY)
-                        moves.push_back(CreateMove(start_square, start_square + dir*16, DOUBLE_PAWN));
+                        moves.push_back(CreateMove(start_square, start_square + dir*16, DOUBLE_PAWN, curr_castle_rights));
                 }
             }
 
@@ -254,23 +246,23 @@ std::vector<Move> Board::GetAllMoves () {
             if (IsEnemyPiece(squares[first_diagonal]) &&
             abs(start_file - first_diagonal%8) == 1) {
                 if (is_next_rank_promo) {
-                    moves.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_QUEEN, PR_CAS, squares[first_diagonal]));
-                    moves.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_BISHOP, PR_CAS, squares[first_diagonal]));
-                    moves.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_KNIGHT, PR_CAS, squares[first_diagonal]));
-                    moves.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_ROOK, PR_CAS, squares[first_diagonal]));
+                    moves.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_QUEEN, curr_castle_rights, squares[first_diagonal]));
+                    moves.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_BISHOP, curr_castle_rights, squares[first_diagonal]));
+                    moves.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_KNIGHT, curr_castle_rights, squares[first_diagonal]));
+                    moves.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_ROOK, curr_castle_rights, squares[first_diagonal]));
                 } else {
-                    moves.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE, PR_CAS, squares[first_diagonal]));
+                    moves.push_back(CreateMove(start_square, first_diagonal, CAPTURE_MOVE, curr_castle_rights, squares[first_diagonal]));
                 }
             }
             if (IsEnemyPiece(squares[second_diagonal]) &&
             abs(start_file - second_diagonal%8) == 1) {
                 if (is_next_rank_promo) {
-                    moves.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_QUEEN, PR_CAS, squares[second_diagonal]));
-                    moves.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_BISHOP, PR_CAS, squares[second_diagonal]));
-                    moves.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_KNIGHT, PR_CAS, squares[second_diagonal]));
-                    moves.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_ROOK, PR_CAS, squares[second_diagonal]));
+                    moves.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_QUEEN, curr_castle_rights, squares[second_diagonal]));
+                    moves.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_BISHOP, curr_castle_rights, squares[second_diagonal]));
+                    moves.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_KNIGHT, curr_castle_rights, squares[second_diagonal]));
+                    moves.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_ROOK, curr_castle_rights, squares[second_diagonal]));
                 } else {
-                    moves.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE, PR_CAS, squares[second_diagonal]));
+                    moves.push_back(CreateMove(start_square, second_diagonal, CAPTURE_MOVE, curr_castle_rights, squares[second_diagonal]));
                 }
             }
 
@@ -278,10 +270,10 @@ std::vector<Move> Board::GetAllMoves () {
             if (EnPassantExists()) {
                 if (first_diagonal == enpassant_place &&
                 abs(start_file - first_diagonal%8) == 1) {
-                    moves.push_back(CreateMove(start_square, first_diagonal, EN_PASSANT, PR_CAS, PAWN));
+                    moves.push_back(CreateMove(start_square, first_diagonal, EN_PASSANT, curr_castle_rights, PAWN));
                 } else if(second_diagonal == enpassant_place &&
                 abs(start_file - second_diagonal%8) == 1) {
-                    moves.push_back(CreateMove(start_square, second_diagonal, EN_PASSANT, PR_CAS, PAWN));
+                    moves.push_back(CreateMove(start_square, second_diagonal, EN_PASSANT, curr_castle_rights, PAWN));
                 }
             }
         }
@@ -316,7 +308,10 @@ bool Board::IsSquareAttacked (int square_index) {
     Piece opp_color = SwitchColor(color_to_play);
 
     for (int m : knight_moves) {
-        if (squares[square_index + m] == (KNIGHT | opp_color)) return true;
+        int next_square = square_index + m;
+        if (next_square > 63 || next_square < 0) continue;
+        if (abs(square_index%8 - next_square%8) > 2) continue;
+        if (squares[next_square] == (KNIGHT | opp_color)) return true;
     }
 
     for (int diri = 0; diri < 8; ++diri) {
@@ -334,6 +329,8 @@ bool Board::IsSquareAttacked (int square_index) {
                      (next_square == W_PAWN && i == 0 && (directions[diri] == -7 || directions[diri] == -9))
                 ) {
                     return true;
+                } else {
+                    break;
                 }
             }
         }
@@ -346,12 +343,14 @@ void Board::ExecuteMove (Move move) {
     if (IsNullMove(move)) return;
 
     /* Make the move */
-    uint8_t start_pos, final_pos, moved_piece;
+    uint8_t start_pos, final_pos, moved_piece, raw_moved_piece, captured_piece;
     bool white_color;
 
     start_pos = GetStartPos(move);
     final_pos = GetFinalPos(move);
     moved_piece = squares[start_pos];
+    raw_moved_piece = RawPiece(moved_piece);
+    captured_piece = GetCapturedPieceFromMove(move);
     white_color = IsWhiteToPlay();
 
     tracker.PushMove(move);
@@ -361,9 +360,34 @@ void Board::ExecuteMove (Move move) {
     /* Make the move */
 
     /* Update board state */
-    castling_rights &= GetCastleRights(move);
+    if (RawPiece(captured_piece) == ROOK) {
+        if (final_pos == 7) {
+            castling_rights &= 0b0111;
+        } else if (final_pos == 0) {
+            castling_rights &= 0b1011;
+        } else if (final_pos == 63) {
+            castling_rights &= 0b1101;
+        } else if (final_pos == 56) {
+            castling_rights &= 0b1110;
+        }
+    }
 
-    if (RawPiece(moved_piece) == PAWN) {
+    if (raw_moved_piece == ROOK) {
+        if (start_pos == 7) {
+            castling_rights &= 0b0111;
+        } else if (start_pos == 0) {
+            castling_rights &= 0b1011;
+        } else if (start_pos == 63) {
+            castling_rights &= 0b1101;
+        } else if (start_pos == 56) {
+            castling_rights &= 0b1110;
+        }
+    } else if (raw_moved_piece == KING) {
+        uint8_t change_castle_rights = white_color? 0b0011 : 0b1100;
+        castling_rights &= change_castle_rights;
+    }
+
+    if (raw_moved_piece == PAWN) {
         int dir = (white_color)? 1 : -1;
         uint8_t start_pos, final_pos;
 
@@ -377,7 +401,7 @@ void Board::ExecuteMove (Move move) {
         } else if (IsPromotion(move)) {               // Promotion
             squares[final_pos] = GetPromotionPieceFromMove(move) | color_to_play;
         }
-    } else if (RawPiece(moved_piece) == KING) {
+    } else if (raw_moved_piece == KING) {
         if (white_color) white_king_pos = final_pos;
         else             black_king_pos = final_pos;
 
@@ -394,7 +418,7 @@ void Board::ExecuteMove (Move move) {
 
     if (!IsDoublePawn(move)) enpassant_place = -1;
 
-    if (IsCapture(move) || RawPiece(moved_piece) == PAWN) {
+    if (IsCapture(move) || raw_moved_piece == PAWN) {
         fifty_move_rule = 0;
     } else {
         fifty_move_rule++;
@@ -443,7 +467,7 @@ void Board::UndoMove (Move move) {
     }
 
     /* Update Board State */
-    castling_rights |= ~GetCastleRights(move);
+    castling_rights |= GetCastleRights(move);
 
     if (RawPiece(moved_piece) == KING) {
         if (IsWhite(moved_piece)) white_king_pos = start_pos;

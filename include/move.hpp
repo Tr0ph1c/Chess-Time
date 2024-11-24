@@ -3,7 +3,6 @@
 #include "piece.hpp"
 #include <iostream>
 
-#define PR_CAS 0xF   // Preserve castling rights
 #define NULL_MOVE 0  // Deleted moves are represented this way instead of having to physically remove them from arrays
 
 typedef uint32_t Move;
@@ -16,6 +15,7 @@ typedef uint32_t Move;
 // Castling Rights:
 // KQkq
 // K = King side white , Q = Queen side white
+// Represents the castling rights BEFORE the move was made
 // 
 // Positions:
 // storing a position takes 6 bits
@@ -50,7 +50,7 @@ enum MOVE_FLAG {
     PROMO_ROOK   = 0b1011
 };
 
-Move CreateMove   (uint8_t _start, uint8_t _final, uint8_t _flags = QUIET_MOVE, uint8_t _castle_rights = PR_CAS, Piece _captured = EMPTY);
+Move CreateMove   (uint8_t _start, uint8_t _final, uint8_t _flags, uint8_t _castle_rights, Piece _captured = EMPTY);
 
 bool IsNullMove       (Move);
 bool IsNormalMove     (Move);
