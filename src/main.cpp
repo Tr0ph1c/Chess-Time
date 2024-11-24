@@ -9,6 +9,7 @@
 #include "SDL2/SDL.h"
 #include "board.hpp"
 #include "GUI.hpp"
+#include "AI.hpp"
 
 const int framerate = 30;
 const int target_delta = 1000 / framerate;
@@ -65,6 +66,34 @@ void StartGame () {
 
         HandleEvents();
         GUI_instance->ShowFrame();
+
+        frame_delta = SDL_GetTicks();
+        if (frame_delta < target_delta) SDL_Delay(target_delta - frame_delta);
+    }
+
+    delete GUI_instance;
+}
+
+void StartAIGame () {
+    GUI_instance = new GUI(&board);
+    AI computer(&board);
+
+    if (position[0] == 'X')
+         board.RestartBoard();
+    else board.RestartBoard(position);
+
+    GUI_instance->FillHighlightMatrix();
+
+    while (GUI_instance->running) {
+        start_frame = SDL_GetTicks();
+
+        if (board.IsWhiteToPlay()) {
+            HandleEvents();
+            GUI_instance->ShowFrame();
+        } else {
+            computer.PlayMove();
+            GUI_instance->FillHighlightMatrix();
+        }
 
         frame_delta = SDL_GetTicks();
         if (frame_delta < target_delta) SDL_Delay(target_delta - frame_delta);
@@ -146,6 +175,8 @@ int main (int argc, char** args) {
                 break;
             } else if (command == "start") {
                 StartGame();
+            } else if (command == "startai") {
+                StartAIGame();
             } else if (command == "perft") {
                 std::cin >> argument;
                 StartPerft(HelperClass::GetNumberFromPointer(argument.c_str()));
