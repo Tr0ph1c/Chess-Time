@@ -67,6 +67,11 @@ void GUI::RenderBoard () {
     }
 }
 
+void GUI::FetchMoves () {
+    board->GetLegalMoves(&move_set);
+    FillHighlightMatrix();
+}
+
 void GUI::InitializeHighlightMatrix () {
     for (int i = 0; i < 64; ++i) {
         highlight_matrix[i] = new std::vector<PosMove>;
@@ -84,13 +89,13 @@ void GUI::FillHighlightMatrix () {
         highlight_matrix[i]->clear();
     }
 
-    for (int i = 0; i < static_cast<int>(move_set->size()); ++i) {
-        if (IsNullMove(move_set->at(i))) continue;
+    for (size_t i = 0; i < move_set.Size(); ++i) {
+        if (IsNullMove(move_set[i])) continue;
 
-        int square_to_fill = GetStartPos(move_set->at(i));
-        PosMove pm(i, GetFinalPos(move_set->at(i)));
+        int square_to_fill = GetStartPos(move_set[i]);
+        PosMove pm(i, GetFinalPos(move_set[i]));
         highlight_matrix[square_to_fill]->push_back(pm);
-        if (IsPromotion(move_set->at(i))) i += 3;
+        if (IsPromotion(move_set[i])) i += 3;
     }
 }
 
@@ -109,9 +114,8 @@ void GUI::Select (int square) {
 void GUI::ExecutePromotion (int promotion_offset) {
     if (is_user_promoting) {
         is_user_promoting = false;
-        board->ExecuteMove(move_set->at(promotion_index + promotion_offset));
-        board->EndTurn();
-        FillHighlightMatrix();
+        board->ExecuteMove(move_set.At(promotion_index + promotion_offset));
+        FetchMoves();
         Deselect();
     }
 }
@@ -125,8 +129,7 @@ void GUI::UndoUserMove () {
     if (board->tracker.IsEmpty()) return;
     Deselect();
     board->UndoMove(board->tracker.GetCurrMove());
-    board->EndTurn();
-    FillHighlightMatrix();
+    FetchMoves();
 }
 
 void GUI::HandleBoardClick (int x, int y) {
@@ -144,13 +147,12 @@ void GUI::HandleBoardClick (int x, int y) {
             auto move_to_execute = std::find(highlight_matrix[selected_square]->begin(), highlight_matrix[selected_square]->end(), board_index);
 
             if (move_to_execute != highlight_matrix[selected_square]->end()) {
-                if (IsPromotion(move_set->at(move_to_execute->index))) {
+                if (IsPromotion(move_set.At(move_to_execute->index))) {
                     GiveUserPromotionChoice(move_to_execute->index);
                     return;
                 }
-                board->ExecuteMove(move_set->at(move_to_execute->index));
-                board->EndTurn();
-                FillHighlightMatrix();
+                board->ExecuteMove(move_set.At(move_to_execute->index));
+                FetchMoves();
                 Deselect();
             } else {
                 Deselect();
@@ -246,7 +248,6 @@ void GUI::InitTextures () {
 
 void GUI::Init (Board* _board) {
     board = _board;
-    move_set = &_board->move_set;
     InitializeHighlightMatrix();
 
     if((SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO)==-1)) { 

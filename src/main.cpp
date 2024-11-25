@@ -59,7 +59,7 @@ void StartGame () {
     else board.RestartBoard(position);
 
     board.PrintBoard();
-    GUI_instance->FillHighlightMatrix();
+    GUI_instance->FetchMoves();
 
     while (GUI_instance->running) {
         start_frame = SDL_GetTicks();
@@ -82,7 +82,7 @@ void StartAIGame () {
          board.RestartBoard();
     else board.RestartBoard(position);
 
-    GUI_instance->FillHighlightMatrix();
+    GUI_instance->FetchMoves();
 
     while (GUI_instance->running) {
         start_frame = SDL_GetTicks();
@@ -92,7 +92,7 @@ void StartAIGame () {
             GUI_instance->ShowFrame();
         } else {
             computer.PlayMove();
-            GUI_instance->FillHighlightMatrix();
+            GUI_instance->FetchMoves();
         }
 
         frame_delta = SDL_GetTicks();
@@ -105,20 +105,17 @@ void StartAIGame () {
 size_t Perft (int depth) {
     if (!depth) return 1ULL;
 
-    std::vector<Move> move_list;
+    MoveArray move_list;
     size_t n_moves = 0, i = 0;
     size_t nodes = 0;
 
-    move_list = board.GetLegalMoves();
-    for (Move m : move_list) {
-        if (IsNullMove(m)) continue;
-        n_moves++;
-    }
+    board.GetLegalMoves(&move_list);
+    n_moves = move_list.NonNullSize();
 
     if (depth == 1) 
         return n_moves;
     
-    for (i = 0; i < move_list.size(); i++) {
+    for (i = 0; i < move_list.Size(); i++) {
         if (IsNullMove(move_list[i])) continue;
 
         board.ExecuteMove(move_list[i]);
@@ -144,18 +141,18 @@ void StartDivPerft (int max_depth) {
          board.RestartBoard();
     else board.RestartBoard(position);
 
-    std::vector<Move> move_list;
-    move_list = board.GetLegalMoves();
+    MoveArray move_list;
+    board.GetLegalMoves(&move_list);
     size_t combined = 0;
 
-    for (Move m : move_list) {
-        if (IsNullMove(m)) continue;
+    for (size_t i = 0; i < move_list.Size(); ++i) {
+        if (IsNullMove(move_list[i])) continue;
 
-        board.ExecuteMove(m);
+        board.ExecuteMove(move_list[i]);
         size_t curr_perft = Perft(max_depth - 1);
         combined += curr_perft;
-        printf("%s: %llu\n", GetNotationFromMove(m).c_str(), curr_perft);
-        board.UndoMove(m);
+        printf("%s: %llu\n", GetNotationFromMove(move_list[i]).c_str(), curr_perft);
+        board.UndoMove(move_list[i]);
     }
 
     printf("\nCombined: %llu\n", combined);

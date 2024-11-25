@@ -13,24 +13,16 @@ AI::AI (Board* _board) {
 
 void AI::PlayMove () {
     Move chosen_move;
-    std::vector<Move> legal_moves = board->GetLegalMoves();
+    MoveArray legal_moves;
+    board->GetLegalMoves(&legal_moves);
 
-    for (Move m : legal_moves) {
-        if (m) {
-            chosen_move = 1;
-            break;
-        }
-
-        chosen_move = NULL_MOVE;
-    }
-
-    if (chosen_move == NULL_MOVE) {
+    if (legal_moves.NoLegalMoves()) {
         printf("You won!");
         return;
     }
 
     while (true) {
-        std::uniform_int_distribution<int> irando(0, legal_moves.size() - 1);
+        std::uniform_int_distribution<int> irando(0, legal_moves.Size() - 1);
         int chosen = irando(rng);
 
         if (legal_moves[chosen]) {
@@ -40,7 +32,6 @@ void AI::PlayMove () {
     }
 
     board->ExecuteMove(chosen_move);
-    board->EndTurn();
 }
 
 float AI::Search (int depth) {

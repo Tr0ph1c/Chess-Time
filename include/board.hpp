@@ -5,8 +5,32 @@
 #include <vector>
 #include <string>
 
-class GameTracker
-{
+class MoveArray {
+    private:
+    Move* array;
+    size_t size = 0;
+    size_t non_null_size = 0;
+    static const int MAX_SIZE = 256;
+
+    public:
+    void operator= (MoveArray&&) = delete;
+    void operator= (MoveArray&) = delete;
+    Move operator[] (size_t);
+    Move At (size_t);
+    
+    MoveArray ();
+    ~MoveArray ();
+
+    size_t Size ();
+    size_t NonNullSize ();
+    void AddMove (Move);
+    void NullifyMove (size_t);
+    void Trim ();
+    void Clear ();
+    bool NoLegalMoves ();
+};
+
+class GameTracker {
 private:
     std::vector<Move> move_history;
 
@@ -43,9 +67,6 @@ class Board {
 
     Piece squares[64] = {EMPTY};
     GameTracker tracker;
-    // TODO: make the move_set into a normal array with a max size of 256
-    // this will require lots of refactoring
-    std::vector<Move> move_set;
     int distance_to_edge[64][8] = {
         {7, 0, 7, 0, 0, 0, 7, 0},
         {7, 0, 6, 1, 1, 0, 6, 0},
@@ -131,10 +152,10 @@ class Board {
     inline bool IsOfColor   (Piece p, Piece col) { return p & col; }
     inline bool EnPassantExists () { return enpassant_place != -1; }
 
-    void EndTurn ();
+    //void EndTurn ();
 
-    std::vector<Move> GetAllMoves   ();
-    std::vector<Move> GetLegalMoves ();
+    void GetAllMoves (MoveArray*);
+    void GetLegalMoves (MoveArray*);
 
     bool IsInCheck ();
     bool IsSquareAttacked (int square_index);

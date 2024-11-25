@@ -53,7 +53,7 @@ class PosMove {
     }
 };
 
-std::vector<Move>* move_set = nullptr;
+MoveArray move_set;
 std::vector<PosMove>* highlight_matrix[64];
 int selected_square = -1;
 bool is_user_promoting = false;
@@ -71,6 +71,7 @@ void RenderBoard ();
 void RenderBoardRightSide ();
 void ShowFrame ();
 
+void FetchMoves ();
 void InitializeHighlightMatrix ();
 void FreeHighlightMatrix ();
 void FillHighlightMatrix ();
