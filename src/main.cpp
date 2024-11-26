@@ -21,6 +21,14 @@ GUI* GUI_instance;
 
 Board board;
 char position[90] = "X"; // "X" means startpos
+char *help_str =
+        "exit             : exits the program.\n"
+        "position [FEN/X] : sets the position to [FEN], only accepts valid FEN strings\n"
+        "start            : starts a GUI board with the position from position.\n"
+        "startai          : starts a game against an AI adversary.\n"
+        "perft [depth]    : starts an iterative perft test starting from position till [depth] and prints the results.\n"
+        "divide [depth]   : outputs the perft result for the sub-tree of each move in the current position. \n";
+
 
 void HandleEvents () {
     SDL_Event event;
@@ -156,6 +164,10 @@ void StartDivPerft (int max_depth) {
     printf("\nCombined: %llu\n", combined);
 }
 
+void PrintHelp(){
+    std::cout << help_str;
+}
+
 int main (int argc, char** args) {
     while (true) {
         std::string command;
@@ -181,8 +193,7 @@ int main (int argc, char** args) {
             } else if (command == "position") {
                 ChangePosition();
             } else if (command == "help") {
-                // TODO: make help function
-                // PrintHelp();
+                 PrintHelp();
             } else {
                 printf("Unknown command\n");
             }
