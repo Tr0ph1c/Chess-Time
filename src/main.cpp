@@ -93,7 +93,7 @@ void StartAIGame () {
             HandleEvents();
             GUI_instance->ShowFrame();
         } else {
-            computer.PlayMove();
+            board.ExecuteMove(computer.PlayMove());
             GUI_instance->FetchMoves();
         }
 

@@ -20,7 +20,7 @@ class AI {
 
     AI (Board*);
 
-    void PlayMove ();
+    Move PlayMove ();
     int Search (int depth, int alpha, int beta);
     int Evaluate ();
 };

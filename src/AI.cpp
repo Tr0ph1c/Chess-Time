@@ -11,7 +11,7 @@ AI::AI (Board* _board) {
     board = _board;
 }
 
-void AI::PlayMove () {
+Move AI::PlayMove () {
     Move chosen_move;
     MoveArray legal_moves;
     board->GetAllMoves(&legal_moves);
@@ -26,7 +26,7 @@ void AI::PlayMove () {
 
     if (legal_moves[chosen]) chosen_move = legal_moves[chosen];
 
-    board->ExecuteMove(chosen_move);
+    return chosen_move;
 }
 
 int AI::Search (int depth, int alpha, int beta) {
