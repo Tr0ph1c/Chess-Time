@@ -6,10 +6,6 @@ Move CreateMove (uint8_t _start_pos, uint8_t _final_pos, uint8_t _flags, uint8_t
     return (((((((RawPiece(_captured) << 4) | _castle_rights) << 4) | _flags) << 6) | _start_pos) << 6) | _final_pos;
 }
 
-bool IsNullMove (Move m) {
-    return !m;
-}
-
 bool IsNormalMove (Move m) {
     return !(GetFlags(m));
 }

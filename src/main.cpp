@@ -1,8 +1,10 @@
 // TODO:
-//      Make object files for faster building of project
-//      Make a helper function that takes a board index and transforms it to UCI notation ie c6
-//      Make a helper function that takes a move and transforms it to UCI notation ie a2a3
-//      Add sound to GUI
+//      * Make object files for faster building of project
+//      * Make a helper function that takes a board index and transforms it to UCI notation ie c6
+//      * Add sound to GUI
+//      * Introduce a Perft Suite that tests for perft results on multiple depths
+//   from multiple positions and compares those against a set of known perft
+//   results from https://www.chessprogramming.org/Perft_Results
 
 #include <iostream>
 
@@ -109,15 +111,13 @@ size_t Perft (int depth) {
     size_t n_moves = 0, i = 0;
     size_t nodes = 0;
 
-    board.GetLegalMoves(&move_list);
-    n_moves = move_list.NonNullSize();
+    board.GetAllMoves(&move_list);
+    n_moves = move_list.Size();
 
     if (depth == 1) 
         return n_moves;
     
     for (i = 0; i < move_list.Size(); i++) {
-        if (IsNullMove(move_list[i])) continue;
-
         board.ExecuteMove(move_list[i]);
         nodes += Perft(depth - 1);
         board.UndoMove(move_list[i]);
@@ -142,12 +142,10 @@ void StartDivPerft (int max_depth) {
     else board.RestartBoard(position);
 
     MoveArray move_list;
-    board.GetLegalMoves(&move_list);
+    board.GetAllMoves(&move_list);
     size_t combined = 0;
 
     for (size_t i = 0; i < move_list.Size(); ++i) {
-        if (IsNullMove(move_list[i])) continue;
-
         board.ExecuteMove(move_list[i]);
         size_t curr_perft = Perft(max_depth - 1);
         combined += curr_perft;

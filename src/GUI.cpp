@@ -68,7 +68,7 @@ void GUI::RenderBoard () {
 }
 
 void GUI::FetchMoves () {
-    board->GetLegalMoves(&move_set);
+    board->GetAllMoves(&move_set);
     FillHighlightMatrix();
 }
 
@@ -90,8 +90,6 @@ void GUI::FillHighlightMatrix () {
     }
 
     for (size_t i = 0; i < move_set.Size(); ++i) {
-        if (IsNullMove(move_set[i])) continue;
-
         int square_to_fill = GetStartPos(move_set[i]);
         PosMove pm(i, GetFinalPos(move_set[i]));
         highlight_matrix[square_to_fill]->push_back(pm);
@@ -177,32 +175,37 @@ void GUI::Click (int x, int y) {
     HandleBoardClick(x,y);
 }
 
-void GUI::DrawArrow(int relevant_x ,int relevant_y ,bool is_to_right , SDL_Rect &parent) {
-    SDL_Rect dest_rect;
-    dest_rect.x = relevant_x + parent.x      ;
-    dest_rect.y = relevant_y + parent.y      ;
-    dest_rect.h = parent.h                   ;
-    dest_rect.w = dest_rect.h*(194.0f/322.0f);
+// NOTE:
+// Lets not worry about user friendly GUI for now
+//
+// void GUI::DrawArrow(int relevant_x ,int relevant_y ,bool is_to_right , SDL_Rect &parent) {
+//     SDL_Rect dest_rect;
+//     dest_rect.x = relevant_x + parent.x      ;
+//     dest_rect.y = relevant_y + parent.y      ;
+//     dest_rect.h = parent.h                   ;
+//     dest_rect.w = dest_rect.h*(194.0f/322.0f);
 
-    (is_to_right)?
-    SDL_RenderCopyEx(renderer, arrow_png, NULL, &dest_rect, 0.0, NULL, SDL_FLIP_NONE):
-    SDL_RenderCopyEx(renderer, arrow_png, NULL, &dest_rect, 0.0, NULL, SDL_FLIP_HORIZONTAL);
+//     (is_to_right)?
+//     SDL_RenderCopyEx(renderer, arrow_png, NULL, &dest_rect, 0.0, NULL, SDL_FLIP_NONE):
+//     SDL_RenderCopyEx(renderer, arrow_png, NULL, &dest_rect, 0.0, NULL, SDL_FLIP_HORIZONTAL);
 
-}
+// }
 
-void GUI::RenderBoardRightSide () {
-    DrawArrow(0, 0, false, controls);
-    if (is_user_promoting) SDL_RenderCopy(renderer, promo_tip_png, NULL, &promotion_tip);
+// void GUI::RenderBoardRightSide () {
+//     DrawArrow(0, 0, false, controls);
+//     if (is_user_promoting) SDL_RenderCopy(renderer, promo_tip_png, NULL, &promotion_tip);
 
-//    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-//    SDL_RenderFillRect(renderer, &controlles);
-}
+// //    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+// //    SDL_RenderFillRect(renderer, &controlles);
+// }
 
 void GUI::ShowFrame () {
     SDL_SetRenderDrawColor(renderer, BackgroundColor);
     SDL_RenderClear(renderer);
+
     RenderBoard();
-    RenderBoardRightSide();
+    //RenderBoardRightSide();
+    
     SDL_RenderPresent(renderer);
 }
 
@@ -233,14 +236,14 @@ void GUI::InitTextures () {
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
     pieces_png = IMG_LoadTexture(renderer, "assets/imgs/pieces.png");
-    arrow_png  = IMG_LoadTexture(renderer, "assets/imgs/arrow.png");
+    //arrow_png  = IMG_LoadTexture(renderer, "assets/imgs/arrow.png");
     promo_tip_png = IMG_LoadTexture(renderer, "assets/imgs/promo_tip.png");
 
     SDL_SetTextureScaleMode(pieces_png, SDL_ScaleModeBest);
-    SDL_SetTextureScaleMode(arrow_png , SDL_ScaleModeBest);
+    //SDL_SetTextureScaleMode(arrow_png , SDL_ScaleModeBest);
     SDL_SetTextureScaleMode(promo_tip_png , SDL_ScaleModeBest);
 
-    if (!pieces_png || !arrow_png || !promo_tip_png) {
+    if (!pieces_png || !promo_tip_png) {
         fprintf(stderr, "An image could not be loaded.\n");
         exit(-1);
     }
@@ -311,7 +314,7 @@ void GUI::Shutdown () {
     FreeHighlightMatrix();
 
     SDL_DestroyTexture(pieces_png);
-    SDL_DestroyTexture(arrow_png);
+    //SDL_DestroyTexture(arrow_png);
     SDL_DestroyTexture(promo_tip_png);
     IMG_Quit();
 

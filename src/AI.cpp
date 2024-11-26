@@ -14,32 +14,27 @@ AI::AI (Board* _board) {
 void AI::PlayMove () {
     Move chosen_move;
     MoveArray legal_moves;
-    board->GetLegalMoves(&legal_moves);
+    board->GetAllMoves(&legal_moves);
 
-    if (legal_moves.NoLegalMoves()) {
+    if (legal_moves.Empty()) {
         printf("You won!");
         return;
     }
 
-    while (true) {
-        std::uniform_int_distribution<int> irando(0, legal_moves.Size() - 1);
-        int chosen = irando(rng);
+    std::uniform_int_distribution<int> irando(0, legal_moves.Size() - 1);
+    int chosen = irando(rng);
 
-        if (legal_moves[chosen]) {
-            chosen_move = legal_moves[chosen];
-            break;
-        }
-    }
+    if (legal_moves[chosen]) chosen_move = legal_moves[chosen];
 
     board->ExecuteMove(chosen_move);
 }
 
-float AI::Search (int depth) {
+int AI::Search (int depth, int alpha, int beta) {
     // negamax + alphabeta pruning search up to fixed depth (recommended 4-5)
     return 0;
 }
 
-float AI::Evaluate () {
+int AI::Evaluate () {
     // evaluate end positions of search and return evaluation
     // use heuristic functions
     return 0;

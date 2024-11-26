@@ -5,11 +5,17 @@
 #include <vector>
 #include <string>
 
+struct Pin {
+    int position;
+    int direction;
+};
+
+// TODO: Make it a template class
 class MoveArray {
     private:
     Move* array;
     size_t size = 0;
-    size_t non_null_size = 0;
+    size_t capacity = 0;
     static const int MAX_SIZE = 256;
 
     public:
@@ -19,15 +25,18 @@ class MoveArray {
     Move At (size_t);
     
     MoveArray ();
+    MoveArray (size_t);
     ~MoveArray ();
 
     size_t Size ();
-    size_t NonNullSize ();
     void AddMove (Move);
-    void NullifyMove (size_t);
+    void AddRestrictedMove (Move m, MoveArray* path);
+    // TODO:
+    // Use the trim function after generating the moves
+    // then check and document any performance changes.
     void Trim ();
     void Clear ();
-    bool NoLegalMoves ();
+    bool Empty ();
 };
 
 class GameTracker {
@@ -141,6 +150,13 @@ class Board {
     int fifty_move_rule = 0;
     uint8_t white_king_pos = 4;
     uint8_t black_king_pos = 60;
+    // i think theoretically the maximum number of squares
+    // that could be in this array at any given position
+    // is nothing more than 8, but i made it 10 just as
+    // a safety margin because i'm not entirely sure.
+    MoveArray check_path = MoveArray(10);
+    std::vector<Pin> pins = std::vector<Pin>(8);
+    bool is_double_checked = false;
 
     void PrintBoard ();
     void LoadBoard (const char* FEN);
@@ -155,10 +171,11 @@ class Board {
     //void EndTurn ();
 
     void GetAllMoves (MoveArray*);
-    void GetLegalMoves (MoveArray*);
+    void GetCheckPathAndPins ();
 
     bool IsInCheck ();
     bool IsSquareAttacked (int square_index);
+    bool MoveWillExposeKing (Move); // Only used for en passant
 
     void ExecuteMove    (Move);
     void UndoMove       (Move);

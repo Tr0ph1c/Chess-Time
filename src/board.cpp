@@ -7,6 +7,7 @@
 #include <string>
 
 // TODO:
+// store the indicies that pieces are on instead of looping over whole board everytime
 // 50 move rule
 // 3 fold repitition
 
@@ -14,7 +15,6 @@
 
 // TODO: convert current position to FEN string
 void Board::PrintBoard () {
-    // DOESN'T WORK AS INTENDED ANYMORE
     printf("\nColor to play: %c\nCastling rights: %d\nEn passant: %d\n50 move clock: %d\nFull move counter: %d\n",
         IsWhiteToPlay()? 'w' : 'b',
         castling_rights,
@@ -23,6 +23,10 @@ void Board::PrintBoard () {
         HalfMovesToFullMoves(half_moves));
 }
 
+// TODO:
+// Stress test the LoadBoard function.
+// It was never properly tested so there
+// probably a couple of bugs lying around.
 void Board::LoadBoard (const char* FEN) {
     for (Piece &p : squares) {
         p = EMPTY;
@@ -68,6 +72,9 @@ void Board::LoadBoard (const char* FEN) {
                     case 'q':
                         castling_rights |= 0b0001;
                         break;
+                    case '-':
+                        castling_rights = 0;
+                        break;
                     default:
                         printf("Error while loading castling rights\n");
                 }
@@ -103,9 +110,19 @@ void Board::RestartBoard (const char* position) {
 //     }
 // }
 
+// 1) Before creating king moves check that the squares are not attacked
+// 2) Before creating any other piece's move check if the final square is
+// on the "check path"
+// 3) If the king is double checked only the king is allowed to move
 void Board::GetAllMoves (MoveArray* moves) {
     moves->Clear();
+    check_path.Clear();
+    pins.clear();
     uint8_t curr_castle_rights = castling_rights;
+
+    // Initialize the check path and the pins vector
+    // if they exist to restrict generated moves
+    GetCheckPathAndPins();
 
     for (int start_square = 0; start_square < 64; ++start_square) {
         Piece _piece = squares[start_square];
@@ -117,7 +134,7 @@ void Board::GetAllMoves (MoveArray* moves) {
         int start_file = start_square % 8;
 
         // Generate moves by piece type
-        if (IsSlidingPiece(_piece)) {
+        if (IsSlidingPiece(_piece) && !is_double_checked) {
             int diri = 0;
             int diri_max = 8;
 
@@ -125,32 +142,54 @@ void Board::GetAllMoves (MoveArray* moves) {
             else if (_raw == BISHOP) diri = 4;
 
             for (; diri < diri_max; ++diri) {
+                // make sure that the piece is not pinned on the direction before generating its moves on that direction
+                bool skip_direction = false;
+                for (size_t _pin = 0; _pin < pins.size(); ++_pin) {
+                    if (pins[_pin].position == start_square && pins[_pin].direction != directions[diri] && pins[_pin].direction != -directions[diri]) {
+                        skip_direction = true;
+                        break;
+                    }
+                }
+
+                if (skip_direction) continue;
+
                 for (int i = 0; i < distance_to_edge[start_square][diri]; ++i) {
                     int next_square = start_square + (directions[diri] * (i + 1));
                     
                     if (squares[next_square] == EMPTY) {
-                        moves->AddMove(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights));
+                        moves->AddRestrictedMove(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights), &check_path);
                     } else if (IsAllyPiece(squares[next_square])) {
                         break;
                     } else if (IsEnemyPiece(squares[next_square])) {
-                        moves->AddMove(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]));
+                        moves->AddRestrictedMove(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]), &check_path);
                         break;
                     }
                 }
             }
-        } else if (_raw == KNIGHT) {
+        } else if (_raw == KNIGHT && !is_double_checked) {
             for (int move : knight_moves) {
                 int next_square = start_square + move;
                 int next_file = next_square % 8;
+                
+                // make sure knight is not pinned
+                bool skip_generation = false;
+                for (size_t _pin = 0; _pin < pins.size(); ++_pin) {
+                    if (pins[_pin].position == start_square) {
+                        skip_generation = true;
+                        break;
+                    }
+                }
 
-                if (next_square >= 0 && next_square < 64) { // Make sure its on the board
-                    if (abs(start_file - next_file) < 3) {  // Make sure no warping
-                        if (squares[next_square] == EMPTY) {
-                            moves->AddMove(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights));
-                        } else if (IsAllyPiece(squares[next_square])) {
-                            continue;
-                        } else if (IsEnemyPiece(squares[next_square])) {
-                            moves->AddMove(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]));
+                if (!skip_generation) {
+                    if (next_square >= 0 && next_square < 64) { // Make sure its on the board
+                        if (abs(start_file - next_file) < 3) {  // Make sure no warping
+                            if (squares[next_square] == EMPTY) {
+                                moves->AddRestrictedMove(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights), &check_path);
+                            } else if (IsAllyPiece(squares[next_square])) {
+                                continue;
+                            } else if (IsEnemyPiece(squares[next_square])) {
+                                moves->AddRestrictedMove(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]), &check_path);
+                            }
                         }
                     }
                 }
@@ -163,18 +202,18 @@ void Board::GetAllMoves (MoveArray* moves) {
                 if (next_square >= 0 && next_square < 64) {
                     if (abs(start_file - next_file) < 2) {
                         if (squares[next_square] == EMPTY) {
-                            moves->AddMove(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights));
+                            if (!IsSquareAttacked(next_square)) moves->AddMove(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights));
                         } else if (IsAllyPiece(squares[next_square])) {
                             continue;
                         } else if (IsEnemyPiece(squares[next_square])) {
-                            moves->AddMove(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]));
+                            if (!IsSquareAttacked(next_square)) moves->AddMove(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]));
                         }
                     }   
                 }
             }
 
             bool K = true, Q = true;
-            if (!IsInCheck()) {
+            if (!IsInCheck() && !is_double_checked) {
             if (IsWhiteToPlay()) {
                 if (castling_rights & 0b1000) {
                     for (uint8_t s : white_kingside) {
@@ -182,7 +221,7 @@ void Board::GetAllMoves (MoveArray* moves) {
                         K = false;
                         break;
                     }
-                    if (IsSquareAttacked(WKSC_SQUARE - 1)) K = false;
+                    if (IsSquareAttacked(WKSC_SQUARE - 1) || IsSquareAttacked(WKSC_SQUARE)) K = false;
                     if (K) moves->AddMove(CreateMove(start_square, WKSC_SQUARE, CASTLE_KS, curr_castle_rights));
                 }
                 if (castling_rights & 0b0100) {
@@ -191,7 +230,7 @@ void Board::GetAllMoves (MoveArray* moves) {
                         Q = false;
                         break;
                     }
-                    if (IsSquareAttacked(WQSC_SQUARE + 1)) Q = false;
+                    if (IsSquareAttacked(WQSC_SQUARE + 1) || IsSquareAttacked(WQSC_SQUARE)) Q = false;
                     if (Q) moves->AddMove(CreateMove(start_square, WQSC_SQUARE, CASTLE_QS, curr_castle_rights));
                 }
             } else {
@@ -201,7 +240,7 @@ void Board::GetAllMoves (MoveArray* moves) {
                         K = false;
                         break;
                     }
-                    if (IsSquareAttacked(BKSC_SQUARE - 1)) K = false;
+                    if (IsSquareAttacked(BKSC_SQUARE - 1) || IsSquareAttacked(BKSC_SQUARE)) K = false;
                     if (K) moves->AddMove(CreateMove(start_square, BKSC_SQUARE, CASTLE_KS, curr_castle_rights));
                 }
                 if (castling_rights & 0b0001) {
@@ -210,12 +249,12 @@ void Board::GetAllMoves (MoveArray* moves) {
                         Q = false;
                         break;
                     }
-                    if (IsSquareAttacked(BQSC_SQUARE + 1)) Q = false;
+                    if (IsSquareAttacked(BQSC_SQUARE + 1) || IsSquareAttacked(BQSC_SQUARE)) Q = false;
                     if (Q) moves->AddMove(CreateMove(start_square, BQSC_SQUARE, CASTLE_QS, curr_castle_rights));
                 }
             }
             }
-        } else if (_raw == PAWN) {
+        } else if (_raw == PAWN && !is_double_checked) {
             short dir = (IsWhiteToPlay())? 1 : -1;
             short rank = start_square / 8;
             int forward_square = start_square + dir*8;
@@ -223,45 +262,61 @@ void Board::GetAllMoves (MoveArray* moves) {
             bool is_first_move = (IsWhiteToPlay())? rank == 1 : rank == 6;
             bool is_next_rank_promo = (forward_square / 8 == 0 || forward_square / 8 == 7);
 
-            if(squares[forward_square] == EMPTY) {
-                if (is_next_rank_promo) {
-                    // IMPORTANT: This specific order of move generation is very important
-                    // and should not be altered in any way shape or form.
-                    // This may not be the best way to create a structure that user input
-                    // relies on but is what we got for now.
-                    moves->AddMove(CreateMove(start_square, forward_square, PROMO_QUEEN, curr_castle_rights));
-                    moves->AddMove(CreateMove(start_square, forward_square, PROMO_BISHOP, curr_castle_rights));
-                    moves->AddMove(CreateMove(start_square, forward_square, PROMO_KNIGHT, curr_castle_rights));
-                    moves->AddMove(CreateMove(start_square, forward_square, PROMO_ROOK, curr_castle_rights));
-                } else {
-                    moves->AddMove(CreateMove(start_square, forward_square, QUIET_MOVE, curr_castle_rights));
-                    if (is_first_move && squares[start_square + dir*16] == EMPTY)
-                        moves->AddMove(CreateMove(start_square, start_square + dir*16, DOUBLE_PAWN, curr_castle_rights));
+            // Helper lambda for adding promotion moves
+            // IMPORTANT: This specific order of move generation is very important
+            // and should not be altered in any way shape or form.
+            // This may not be the best way to create a structure that user input
+            // relies on but is what we got for now.
+            auto add_promotion_moves = [&](int to_square, int flags, int captured = EMPTY) {
+                moves->AddRestrictedMove(CreateMove(start_square, to_square, flags | PROMO_QUEEN, curr_castle_rights, captured), &check_path);
+                moves->AddRestrictedMove(CreateMove(start_square, to_square, flags | PROMO_BISHOP, curr_castle_rights, captured), &check_path);
+                moves->AddRestrictedMove(CreateMove(start_square, to_square, flags | PROMO_KNIGHT, curr_castle_rights, captured), &check_path);
+                moves->AddRestrictedMove(CreateMove(start_square, to_square, flags | PROMO_ROOK, curr_castle_rights, captured), &check_path);
+            };
+
+            // If this pawn is pinned any which way,
+            // keep the pin stored for convenience
+            Pin* possible_pin = nullptr;
+            for (size_t _pin = 0; _pin < pins.size(); ++_pin) {
+                if (pins[_pin].position == start_square) {
+                    possible_pin = &pins[_pin];
+                    break;
+                }
+            }
+
+            if (!(possible_pin && possible_pin->direction != dir * 8)) {
+                if(squares[forward_square] == EMPTY) {
+                    if (is_next_rank_promo) {
+                        add_promotion_moves(forward_square, QUIET_MOVE);
+                    } else {
+                        moves->AddRestrictedMove(CreateMove(start_square, forward_square, QUIET_MOVE, curr_castle_rights), &check_path);
+                        if (is_first_move && squares[start_square + dir*16] == EMPTY)
+                            moves->AddRestrictedMove(CreateMove(start_square, start_square + dir*16, DOUBLE_PAWN, curr_castle_rights), &check_path);
+                    }
                 }
             }
 
             int first_diagonal = start_square + dir*7;
             int second_diagonal = start_square + dir*9;
-            if (IsEnemyPiece(squares[first_diagonal]) &&
-            abs(start_file - first_diagonal%8) == 1) {
-                if (is_next_rank_promo) {
-                    moves->AddMove(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_QUEEN, curr_castle_rights, squares[first_diagonal]));
-                    moves->AddMove(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_BISHOP, curr_castle_rights, squares[first_diagonal]));
-                    moves->AddMove(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_KNIGHT, curr_castle_rights, squares[first_diagonal]));
-                    moves->AddMove(CreateMove(start_square, first_diagonal, CAPTURE_MOVE | PROMO_ROOK, curr_castle_rights, squares[first_diagonal]));
-                } else {
-                    moves->AddMove(CreateMove(start_square, first_diagonal, CAPTURE_MOVE, curr_castle_rights, squares[first_diagonal]));
+            if (!(possible_pin && possible_pin->direction != dir * 7)) {
+                if (IsEnemyPiece(squares[first_diagonal]) &&
+                abs(start_file - first_diagonal%8) == 1) {
+                    if (is_next_rank_promo) {
+                        add_promotion_moves(first_diagonal, CAPTURE_MOVE, squares[first_diagonal]);
+                    } else {
+                        moves->AddRestrictedMove(CreateMove(start_square, first_diagonal, CAPTURE_MOVE, curr_castle_rights, squares[first_diagonal]), &check_path);
+                    }
                 }
             }
-            if (IsEnemyPiece(squares[second_diagonal]) &&
-            abs(start_file - second_diagonal%8) == 1) {
-                if (is_next_rank_promo) {
-                    moves->AddMove(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_QUEEN, curr_castle_rights, squares[second_diagonal]));
-                    moves->AddMove(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_BISHOP, curr_castle_rights, squares[second_diagonal]));
-                    moves->AddMove(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_KNIGHT, curr_castle_rights, squares[second_diagonal]));
-                    moves->AddMove(CreateMove(start_square, second_diagonal, CAPTURE_MOVE | PROMO_ROOK, curr_castle_rights, squares[second_diagonal]));
-                } else {
-                    moves->AddMove(CreateMove(start_square, second_diagonal, CAPTURE_MOVE, curr_castle_rights, squares[second_diagonal]));
+
+            if (!(possible_pin && possible_pin->direction != dir * 9)) {
+                if (IsEnemyPiece(squares[second_diagonal]) &&
+                abs(start_file - second_diagonal%8) == 1) {
+                    if (is_next_rank_promo) {
+                        add_promotion_moves(second_diagonal, CAPTURE_MOVE, squares[second_diagonal]);
+                    } else {
+                        moves->AddRestrictedMove(CreateMove(start_square, second_diagonal, CAPTURE_MOVE, curr_castle_rights, squares[second_diagonal]), &check_path);
+                    }
                 }
             }
 
@@ -269,34 +324,90 @@ void Board::GetAllMoves (MoveArray* moves) {
             if (EnPassantExists()) {
                 if (first_diagonal == enpassant_place &&
                 abs(start_file - first_diagonal%8) == 1) {
-                    moves->AddMove(CreateMove(start_square, first_diagonal, EN_PASSANT, curr_castle_rights, PAWN));
+                    Move epm = CreateMove(start_square, first_diagonal, EN_PASSANT, curr_castle_rights, PAWN);
+                    if (!MoveWillExposeKing(epm))
+                        moves->AddMove(epm); // no more checking needed since it wont leave the king in check
                 } else if(second_diagonal == enpassant_place &&
                 abs(start_file - second_diagonal%8) == 1) {
-                    moves->AddMove(CreateMove(start_square, second_diagonal, EN_PASSANT, curr_castle_rights, PAWN));
+                    Move epm = CreateMove(start_square, second_diagonal, EN_PASSANT, curr_castle_rights, PAWN);
+                    if (!MoveWillExposeKing(epm))
+                        moves->AddMove(epm);
                 }
             }
         }
     }
 }
 
-// TODO: Optimize by applying pins and
-// keeping track of attacked squares
-void Board::GetLegalMoves (MoveArray* moves) {
-    GetAllMoves(moves);
+void Board::GetCheckPathAndPins () {
+    Piece opp_color = SwitchColor(color_to_play);
+    int square_index = IsWhiteToPlay()? white_king_pos : black_king_pos;
+    is_double_checked = false;
+    bool is_single_checked = false;
 
-    for (size_t i = 0; i < moves->Size(); ++i) {
-        ExecuteMove(moves->At(i));
-        color_to_play = SwitchColor(color_to_play);
-        if (IsInCheck()) {
-            moves->NullifyMove(i);
+    for (int m : knight_moves) {
+        int next_square = square_index + m;
+        if (next_square > 63 || next_square < 0) continue;
+        if (abs(square_index%8 - next_square%8) > 2) continue;
+        if (squares[next_square] == (KNIGHT | opp_color)) {
+            is_single_checked = true;
+            check_path.AddMove(next_square);
         }
-        color_to_play = SwitchColor(color_to_play);
-        UndoMove(tracker.GetCurrMove());
+    }
+
+    for (int diri = 0; diri < 8; ++diri) {
+        Pin possible_pin = {-1, directions[diri]};
+        for (int i = 0; i < distance_to_edge[square_index][diri]; ++i) {
+            Piece next_square = squares[square_index + (directions[diri] * (i + 1))];
+            if (IsOfColor(next_square, color_to_play)) {
+                if (possible_pin.position == -1) {
+                    possible_pin.position = square_index + (directions[diri] * (i + 1));
+                } else {
+                    break;
+                }
+            }
+            else if (IsOfColor(next_square, opp_color)) {
+                Piece ptype = RawPiece(next_square);
+
+                if ( (ptype == QUEEN) ||
+                     (ptype == ROOK && diri < 4) ||
+                     (ptype == BISHOP && diri >= 4) ||
+                     (ptype == KING && i == 0) ||
+                     (next_square == B_PAWN && i == 0 && (directions[diri] == 7 || directions[diri] == 9)) ||
+                     (next_square == W_PAWN && i == 0 && (directions[diri] == -7 || directions[diri] == -9))
+                ) {
+                    if (possible_pin.position != -1) {
+                        // if there was a possible pin then append it
+                        pins.push_back(possible_pin);
+                        break;
+                    } else {
+                        // if no possible pin, then it's a check
+                        if (is_single_checked) {
+                            is_double_checked = true;
+                            check_path.Clear();
+                            break;
+                        }
+                        is_single_checked = true;
+                        for (int j = 0; j <= i; ++j) {
+                            check_path.AddMove(square_index + (directions[diri] * (j + 1)));
+                        }
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
     }
 }
 
+// TODO:
+// Probably not the most reliable way to check for a king in check
+// since the checkpath gets cleared if there is a double check
+// on the playing side's king.
+// Maybe it's more reliable to use IsSquareAttacked(king_pos)
+// if the checkpath getting cleared cant be worked around.
 bool Board::IsInCheck () {
-    return IsWhiteToPlay()? IsSquareAttacked(white_king_pos) : IsSquareAttacked(black_king_pos);
+    return !check_path.Empty();
 }
 
 bool Board::IsSquareAttacked (int square_index) {
@@ -312,7 +423,7 @@ bool Board::IsSquareAttacked (int square_index) {
     for (int diri = 0; diri < 8; ++diri) {
         for (int i = 0; i < distance_to_edge[square_index][diri]; ++i) {
             Piece next_square = squares[square_index + (directions[diri] * (i + 1))];
-            if (IsOfColor(next_square, color_to_play)) break;
+            if (IsOfColor(next_square, color_to_play) && next_square != (KING | color_to_play)) break;
             else if (IsOfColor(next_square, opp_color)) {
                 Piece ptype = RawPiece(next_square);
 
@@ -334,9 +445,20 @@ bool Board::IsSquareAttacked (int square_index) {
     return false;
 }
 
-void Board::ExecuteMove (Move move) {
-    if (IsNullMove(move)) return;
+// Exclusively used for en passant legal move checking
+bool Board::MoveWillExposeKing (Move m) {
+    bool is_in_check = false;
 
+    ExecuteMove(m);
+    color_to_play = SwitchColor(color_to_play);
+    is_in_check = IsSquareAttacked(((IsWhiteToPlay())? white_king_pos : black_king_pos));
+    color_to_play = SwitchColor(color_to_play);
+    UndoMove(m);
+
+    return is_in_check;
+}
+
+void Board::ExecuteMove (Move move) {
     /* Make the move */
     uint8_t start_pos, final_pos, moved_piece, raw_moved_piece, captured_piece;
     bool white_color;
@@ -425,8 +547,6 @@ void Board::ExecuteMove (Move move) {
 }
 
 void Board::UndoMove (Move move) {
-    if (IsNullMove(move)) return;
-
     uint8_t start_pos, final_pos, moved_piece, moved_piece_color, captured_piece_color, captured_piece = 0;
 
     start_pos = GetStartPos(move);
@@ -570,6 +690,12 @@ void GameTracker::ResetTracker() {
 
 MoveArray::MoveArray () {
     array = static_cast<Move*>(malloc(MAX_SIZE * sizeof(Move)));
+    capacity = MAX_SIZE;
+}
+
+MoveArray::MoveArray (size_t _size) {
+    array = static_cast<Move*>(malloc(_size * sizeof(Move)));
+    capacity = _size;
 }
 
 MoveArray::~MoveArray () {
@@ -577,12 +703,12 @@ MoveArray::~MoveArray () {
 }
 
 Move MoveArray::operator[] (size_t index) {
-    if (index + 1 > size) return NULL_MOVE;
+    if (index + 1 > size) return 0;
     return array[index];
 }
 
 Move MoveArray::At (size_t index) {
-    if (index + 1 > size) return NULL_MOVE;
+    if (index + 1 > size) return 0;
     return array[index];
 }
 
@@ -590,30 +716,37 @@ size_t MoveArray::Size () {
     return size;
 }
 
-size_t MoveArray::NonNullSize () {
-    return non_null_size;
-}
-
 void MoveArray::AddMove (Move m) {
+    if (capacity == size) return;
     array[size] = m;
     size++;
-    non_null_size++;
 }
 
-void MoveArray::NullifyMove (size_t index) {
-    array[index] = NULL_MOVE;
-    non_null_size--;
+void MoveArray::AddRestrictedMove (Move m, MoveArray* path) {
+    if (capacity == size) return;
+    if (!path->Empty()) {
+        for (size_t i = 0; i < path->Size(); ++i) {
+            if (GetFinalPos(m) == path->At(i)) {
+                array[size] = m;
+                size++;
+                break;
+            }
+        }
+    } else {
+        array[size] = m;
+        size++;
+    }
 }
 
 void MoveArray::Trim () {
     array = static_cast<Move*>(realloc(array, size * sizeof(Move)));
+    capacity = size;
 }
 
 void MoveArray::Clear () {
     size = 0;
-    non_null_size = 0;
 }
 
-bool MoveArray::NoLegalMoves () {
-    return non_null_size == 0;
+bool MoveArray::Empty () {
+    return size == 0;
 }
