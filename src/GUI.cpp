@@ -33,8 +33,8 @@ void GUI::DrawPieceInside (SDL_Rect & dest, int rank, int file) {
 
 void GUI::DrawChessSquare (SDL_Color Color, int rank /*y-axis*/, int file /*x-axis*/) {
     SDL_Rect SquareRect;
-    SquareRect.w = BoardRect.w / 8;
-    SquareRect.h = BoardRect.h / 8;
+    SquareRect.w = BoardRect.w / 8 + 1;
+    SquareRect.h = SquareRect.w ;
     SquareRect.y = BoardRect.y + abs(rank - 7) * SquareRect.h;
     SquareRect.x = BoardRect.x + file * SquareRect.w;
 
@@ -53,6 +53,83 @@ void GUI::DrawChessSquare (SDL_Color Color, int rank /*y-axis*/, int file /*x-ax
     }
 }
 
+void GUI::DrawFileNumber() {
+    // init state
+    char text[] = "a";
+    bool isWhite = true;
+    int margin = 1 , square_w = BoardRect.w / 8 + 1;
+
+    // pos
+    SDL_Rect place;
+    place.w = 19;
+    place.h = place.w;
+    place.x = margin ;
+    place.y = BoardRect.y + BoardRect.w - place.w - 8;
+
+    //colors
+    SDL_Color text_white_col = { 255 ,234 ,192 , 255}; // rgb(255, 234, 192)
+    SDL_Color text_black_col = { 130 ,97  ,71  , 255}; // rgb(130, 97, 71)
+
+    for (; text[0] < 'i'; ++text[0]) {
+
+        SDL_Surface* text_surface = // init texture
+                TTF_RenderText_Solid(ConsolaFont,text ,
+                                     (isWhite)?text_white_col:text_black_col);
+        // calc the num place
+        place.w = text_surface->w;
+        place.h = text_surface->h;
+
+        SDL_Texture* number_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
+
+
+        SDL_RenderCopy(renderer, number_texture, NULL, &place);
+
+        SDL_FreeSurface(text_surface);
+        SDL_DestroyTexture(number_texture);
+
+        isWhite  = !isWhite;
+        place.x += square_w;
+    }
+}
+
+void GUI::DrawRankNumber() {
+    // init state
+    char text[] = "8";
+    bool isWhite = true;
+    int margin = 2 , square_w = BoardRect.w / 8 + 1;
+
+    // pos
+    SDL_Rect place;
+    place.w = 19;
+    place.h = place.w;
+    place.x =  square_w * 8 - place.w - margin + 5;
+    place.y = 0 + margin;
+
+    //colors
+    SDL_Color text_white_col = { 255 ,234 ,192 , 255}; // rgb(255, 234, 192)
+    SDL_Color text_black_col = { 130 ,97  ,71  , 255}; // rgb(130, 97, 71)
+
+    for (; text[0] > '0'; --text[0]) {
+
+        SDL_Surface* text_surface = // init texture
+                TTF_RenderText_Solid(ConsolaFont,text ,
+                                     (isWhite)?text_white_col:text_black_col);
+        // calc the num place
+        place.w = text_surface->w;
+        place.h = text_surface->h;
+
+        SDL_Texture* number_texture = SDL_CreateTextureFromSurface(renderer, text_surface);
+
+
+        SDL_RenderCopy(renderer, number_texture, NULL, &place);
+
+        SDL_FreeSurface(text_surface);
+        SDL_DestroyTexture(number_texture);
+
+        isWhite  = !isWhite;
+        place.y += square_w;
+    }
+}
 void GUI::RenderBoard () {
     bool IsSquareWhite = false;
 
@@ -69,6 +146,9 @@ void GUI::RenderBoard () {
             DrawChessSquare(HighlightColor, m.position / 8, m.position % 8);
         }
     }
+    DrawFileNumber();
+    DrawRankNumber();
+
 }
 
 void GUI::RenderHeldPiece () {
@@ -363,7 +443,7 @@ void GUI::Init (Board* _board) {
         exit(-1);
     }
 
-    ConsolaFont = TTF_OpenFont("assets/fonts/ConsolaMono-Book.ttf",70);
+    ConsolaFont = TTF_OpenFont("assets/fonts/ConsolaMono-Book.ttf",20);
 
     if ( !ConsolaFont ) {
         fprintf(stderr, "Failed to load font: %s\n", TTF_GetError());

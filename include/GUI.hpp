@@ -86,6 +86,8 @@ void RenderHeldPiece ();
 void RenderBoard ();
 void ShowFrame ();
 void HandleEvents ();
+void DrawFileNumber();
+void DrawRankNumber();
 
 void InitializeHighlightMatrix ();
 void FreeHighlightMatrix ();
