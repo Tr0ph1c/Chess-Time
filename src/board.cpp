@@ -49,7 +49,7 @@ void Board::LoadBoard (const char* FEN) {
                     index += c - '0'; // from char to int (jump number of files)
                 } else {
                     Piece _p = CharToPiece(c);
-                    // setting king positions from fen string
+                    // Setting king positions from FEN string
                     if      (_p == W_KING) white_king_pos = index;
                     else if (_p == B_KING) black_king_pos = index;
                     squares[index++] = _p;
@@ -114,7 +114,7 @@ void Board::RestartBoard (const char* position) {
 // 2) Before creating any other piece's move check if the final square is
 // on the "check path"
 // 3) If the king is double checked only the king is allowed to move
-void Board::GetAllMoves (SizeArray<Move>* moves) {
+void Board::GetAllMoves (SizeArray* moves) {
     moves->Clear();
     check_path.Clear();
     pins.clear();
@@ -221,8 +221,11 @@ void Board::GetAllMoves (SizeArray<Move>* moves) {
                         K = false;
                         break;
                     }
-                    if (IsSquareAttacked(WKSC_SQUARE - 1) || IsSquareAttacked(WKSC_SQUARE)) K = false;
-                    if (K) moves->AddValue(CreateMove(start_square, WKSC_SQUARE, CASTLE_KS, curr_castle_rights));
+                    if (K) {
+                        if (!IsSquareAttacked(WKSC_SQUARE - 1) && !IsSquareAttacked(WKSC_SQUARE)) {
+                            moves->AddValue(CreateMove(start_square, WKSC_SQUARE, CASTLE_KS, curr_castle_rights));
+                        }
+                    }
                 }
                 if (castling_rights & 0b0100) {
                     for (uint8_t s : white_queenside) {
@@ -230,8 +233,11 @@ void Board::GetAllMoves (SizeArray<Move>* moves) {
                         Q = false;
                         break;
                     }
-                    if (IsSquareAttacked(WQSC_SQUARE + 1) || IsSquareAttacked(WQSC_SQUARE)) Q = false;
-                    if (Q) moves->AddValue(CreateMove(start_square, WQSC_SQUARE, CASTLE_QS, curr_castle_rights));
+                    if (Q) {
+                        if (!IsSquareAttacked(WQSC_SQUARE + 1) && !IsSquareAttacked(WQSC_SQUARE)) {
+                            moves->AddValue(CreateMove(start_square, WQSC_SQUARE, CASTLE_QS, curr_castle_rights));
+                        }
+                    }
                 }
             } else {
                 if (castling_rights & 0b0010) {
@@ -240,8 +246,11 @@ void Board::GetAllMoves (SizeArray<Move>* moves) {
                         K = false;
                         break;
                     }
-                    if (IsSquareAttacked(BKSC_SQUARE - 1) || IsSquareAttacked(BKSC_SQUARE)) K = false;
-                    if (K) moves->AddValue(CreateMove(start_square, BKSC_SQUARE, CASTLE_KS, curr_castle_rights));
+                    if (K) {
+                        if (!IsSquareAttacked(BKSC_SQUARE - 1) && !IsSquareAttacked(BKSC_SQUARE)) {
+                            moves->AddValue(CreateMove(start_square, BKSC_SQUARE, CASTLE_KS, curr_castle_rights));
+                        }
+                    }
                 }
                 if (castling_rights & 0b0001) {
                     for (uint8_t s : black_queenside) {
@@ -249,8 +258,11 @@ void Board::GetAllMoves (SizeArray<Move>* moves) {
                         Q = false;
                         break;
                     }
-                    if (IsSquareAttacked(BQSC_SQUARE + 1) || IsSquareAttacked(BQSC_SQUARE)) Q = false;
-                    if (Q) moves->AddValue(CreateMove(start_square, BQSC_SQUARE, CASTLE_QS, curr_castle_rights));
+                    if (Q) {
+                        if (!IsSquareAttacked(BQSC_SQUARE + 1) && !IsSquareAttacked(BQSC_SQUARE)) {
+                            moves->AddValue(CreateMove(start_square, BQSC_SQUARE, CASTLE_QS, curr_castle_rights));
+                        }
+                    }
                 }
             }
             }
@@ -406,8 +418,14 @@ void Board::GetCheckPathAndPins () {
 // on the playing side's king.
 // Maybe it's more reliable to use IsSquareAttacked(king_pos)
 // if the checkpath getting cleared cant be worked around.
+// NOTE:
+// Found a (maybe?) temporary workaround of just including
+// is_double_checked in the returned expression.
+
+// IMPORTANT:
+// Only use if "GetCheckPathAndPins()" function was called first
 bool Board::IsInCheck () {
-    return !check_path.Empty();
+    return (!check_path.Empty() || is_double_checked);
 }
 
 bool Board::IsSquareAttacked (int square_index) {
@@ -688,49 +706,41 @@ void GameTracker::ResetTracker() {
 
 // ====================   SizeArray   =========================== //
 
-template<typename T>
-SizeArray<T>::SizeArray () {
-    array = static_cast<T*>(malloc(MAX_SIZE * sizeof(T)));
+SizeArray::SizeArray () {
+    array = static_cast<uint32_t*>(malloc(MAX_SIZE * sizeof(uint32_t)));
     capacity = MAX_SIZE;
 }
 
-template<typename T>
-SizeArray<T>::SizeArray (size_t _size) {
-    array = static_cast<T*>(malloc(_size * sizeof(T)));
+SizeArray::SizeArray (size_t _size) {
+    array = static_cast<uint32_t*>(malloc(_size * sizeof(uint32_t)));
     capacity = _size;
 }
 
-template<typename T>
-SizeArray<T>::~SizeArray () {
+SizeArray::~SizeArray () {
     delete array;
 }
 
-template<typename T>
-T SizeArray<T>::operator[] (size_t index) {
+uint32_t SizeArray::operator[] (size_t index) {
     if (index + 1 > size) return 0;
     return array[index];
 }
 
-template<typename T>
-T SizeArray<T>::At (size_t index) {
+uint32_t SizeArray::At (size_t index) {
     if (index + 1 > size) return 0;
     return array[index];
 }
 
-template<typename T>
-size_t SizeArray<T>::Size () {
+size_t SizeArray::Size () {
     return size;
 }
 
-template<typename T>
-void SizeArray<T>::AddValue (T val) {
+void SizeArray::AddValue (uint32_t val) {
     if (capacity == size) return;
     array[size] = val;
     size++;
 }
 
-template<typename T>
-void SizeArray<T>::AddRestrictedMove (Move m, SizeArray<Move>* path) {
+void SizeArray::AddRestrictedMove (Move m, SizeArray* path) {
     if (capacity == size) return;
     if (!path->Empty()) {
         for (size_t i = 0; i < path->Size(); ++i) {
@@ -746,26 +756,15 @@ void SizeArray<T>::AddRestrictedMove (Move m, SizeArray<Move>* path) {
     }
 }
 
-template<typename T>
-void SizeArray<T>::Trim () {
-    array = static_cast<T*>(realloc(array, size * sizeof(T)));
+void SizeArray::Trim () {
+    array = static_cast<uint32_t*>(realloc(array, size * sizeof(uint32_t)));
     capacity = size;
 }
 
-template<typename T>
-void SizeArray<T>::Clear () {
+void SizeArray::Clear () {
     size = 0;
 }
 
-template<typename T>
-bool SizeArray<T>::Empty () {
+bool SizeArray::Empty () {
     return size == 0;
 }
-
-// When I compile without these two lines, the compiler generates a linker error.
-//
-// Solution from: https://isocpp.org/wiki/faq/templates#templates-defn-vs-decl
-// "...The other solution is to leave the definition of the template function in the .cpp file and simply add
-// the line "template class Foo<int>;" to that file..."
-template class SizeArray<int>;
-template class SizeArray<Move>;

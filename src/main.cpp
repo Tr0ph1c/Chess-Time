@@ -80,7 +80,7 @@ void StartAIGame () {
 size_t Perft (int depth) {
     if (!depth) return 1ULL;
 
-    SizeArray<Move> move_list;
+    SizeArray move_list;
     size_t n_moves = 0, i = 0;
     size_t nodes = 0;
 
@@ -114,7 +114,7 @@ void StartDivPerft (int max_depth) {
          board.RestartBoard();
     else board.RestartBoard(position);
 
-    SizeArray<Move> move_list;
+    SizeArray move_list;
     board.GetAllMoves(&move_list);
     size_t combined = 0;
 

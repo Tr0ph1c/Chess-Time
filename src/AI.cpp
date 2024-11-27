@@ -13,7 +13,7 @@ AI::AI (Board* _board) {
 
 Move AI::PlayMove () {
     Move chosen_move = 0;
-    SizeArray<Move> legal_moves;
+    SizeArray legal_moves;
     board->GetAllMoves(&legal_moves);
 
     if (legal_moves.Empty()) {

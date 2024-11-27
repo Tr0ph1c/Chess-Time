@@ -7,26 +7,25 @@
 
 // Random access array with easy insertion to the front
 // specifically made to handle storage of moves
-template <typename T>
 class SizeArray {
     private:
-    T* array;
+    uint32_t* array;
     size_t size = 0;
     size_t capacity = 0;
     static const int MAX_SIZE = 256;
 
     public:
     SizeArray& operator=(const SizeArray) = delete;
-    T operator[] (size_t);
-    T At (size_t);
+    uint32_t operator[] (size_t);
+    uint32_t At (size_t);
     
     SizeArray ();
     SizeArray (size_t);
     ~SizeArray ();
 
     size_t Size ();
-    void AddValue (T);
-    void AddRestrictedMove (Move m, SizeArray<Move>* path);
+    void AddValue (uint32_t);
+    void AddRestrictedMove (Move m, SizeArray* path);
     // TODO:
     // Use the trim function after generating the moves
     // then check and document any performance changes.
@@ -79,7 +78,6 @@ class Board {
     GameTracker tracker;
     int distance_to_edge[64][8] = {{7, 0, 7, 0, 0, 0, 7, 0},{7, 0, 6, 1, 1, 0, 6, 0},{7, 0, 5, 2, 2, 0, 5, 0},{7, 0, 4, 3, 3, 0, 4, 0},{7, 0, 3, 4, 4, 0, 3, 0},{7, 0, 2, 5, 5, 0, 2, 0},{7, 0, 1, 6, 6, 0, 1, 0},{7, 0, 0, 7, 7, 0, 0, 0},{6, 1, 7, 0, 0, 1, 6, 0},{6, 1, 6, 1, 1, 1, 6, 1},{6, 1, 5, 2, 2, 1, 5, 1},{6, 1, 4, 3, 3, 1, 4, 1},{6, 1, 3, 4, 4, 1, 3, 1},{6, 1, 2, 5, 5, 1, 2, 1},{6, 1, 1, 6, 6, 1, 1, 1},{6, 1, 0, 7, 6, 0, 0, 1},{5, 2, 7, 0, 0, 2, 5, 0},{5, 2, 6, 1, 1, 2, 5, 1},{5, 2, 5, 2, 2, 2, 5, 2},{5, 2, 4, 3, 3, 2, 4, 2},{5, 2, 3, 4, 4, 2, 3, 2},{5, 2, 2, 5, 5, 2, 2, 2},{5, 2, 1, 6, 5, 1, 1, 2},{5, 2, 0, 7, 5, 0, 0, 2},{4, 3, 7, 0, 0, 3, 4, 0},{4, 3, 6, 1, 1, 3, 4, 1},{4, 3, 5, 2, 2, 3, 4, 2},{4, 3, 4, 3, 3, 3, 4, 3},{4, 3, 3, 4, 4, 3, 3, 3},{4, 3, 2, 5, 4, 2, 2, 3},{4, 3, 1, 6, 4, 1, 1, 3},
     {4, 3, 0, 7, 4, 0, 0, 3},{3, 4, 7, 0, 0, 4, 3, 0},{3, 4, 6, 1, 1, 4, 3, 1},{3, 4, 5, 2, 2, 4, 3, 2},{3, 4, 4, 3, 3, 4, 3, 3},{3, 4, 3, 4, 3, 3, 3, 4},{3, 4, 2, 5, 3, 2, 2, 4},{3, 4, 1, 6, 3, 1, 1, 4},{3, 4, 0, 7, 3, 0, 0, 4},{2, 5, 7, 0, 0, 5, 2, 0},{2, 5, 6, 1, 1, 5, 2, 1},{2, 5, 5, 2, 2, 5, 2, 2},{2, 5, 4, 3, 2, 4, 2, 3},{2, 5, 3, 4, 2, 3, 2, 4},{2, 5, 2, 5, 2, 2, 2, 5},{2, 5, 1, 6, 2, 1, 1, 5},{2, 5, 0, 7, 2, 0, 0, 5},{1, 6, 7, 0, 0, 6, 1, 0},{1, 6, 6, 1, 1, 6, 1, 1},{1, 6, 5, 2, 1, 5, 1, 2},{1, 6, 4, 3, 1, 4, 1, 3},{1, 6, 3, 4, 1, 3, 1, 4},{1, 6, 2, 5, 1, 2, 1, 5},{1, 6, 1, 6, 1, 1, 1, 6},{1, 6, 0, 7, 1, 0, 0, 6},{0, 7, 7, 0, 0, 7, 0, 0},{0, 7, 6, 1, 0, 6, 0, 1},{0, 7, 5, 2, 0, 5, 0, 2},{0, 7, 4, 3, 0, 4, 0, 3},{0, 7, 3, 4, 0, 3, 0, 4},{0, 7, 2, 5, 0, 2, 0, 5},{0, 7, 1, 6, 0, 1, 0, 6},{0, 7, 0, 7, 0, 0, 0, 7},};
-    //SizeArray indices_with_pieces[]
 
     uint8_t castling_rights = 0; // KQkq
     int enpassant_place = -1;
@@ -92,7 +90,7 @@ class Board {
     // that could be in this array at any given position
     // is nothing more than 8, but i made it 10 just as
     // a safety margin because i'm not entirely sure.
-    SizeArray<Move> check_path = SizeArray<Move>(10);
+    SizeArray check_path = SizeArray(10);
     std::vector<Pin> pins = std::vector<Pin>(8);
     bool is_double_checked = false;
 
@@ -108,7 +106,7 @@ class Board {
 
     //void EndTurn ();
 
-    void GetAllMoves (SizeArray<Move>*);
+    void GetAllMoves (SizeArray*);
     void GetCheckPathAndPins ();
 
     bool IsInCheck ();
