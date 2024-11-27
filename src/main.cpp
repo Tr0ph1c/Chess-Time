@@ -13,10 +13,6 @@
 #include "GUI.hpp"
 #include "AI.hpp"
 
-const int framerate = 30;
-const int target_delta = 1000 / framerate;
-Uint32 start_frame;
-int frame_delta;
 GUI* GUI_instance;
 
 Board board;
@@ -28,32 +24,6 @@ char help_str[] =
         "startai          : starts a game against an AI adversary.\n"
         "perft [depth]    : starts an iterative perft test starting from position till [depth] and prints the results.\n"
         "divide [depth]   : outputs the perft result for the sub-tree of each move in the current position. \n";
-
-
-void HandleEvents () {
-    SDL_Event event;
-    SDL_PollEvent(&event);
-
-    switch (event.type) {
-        case SDL_QUIT:
-            GUI_instance->running = false;
-            break;
-        case SDL_MOUSEBUTTONDOWN:
-            GUI_instance->Click(event.button.x, event.button.y);
-            break;
-        case SDL_KEYDOWN:
-            if (event.key.keysym.sym >= SDLK_1 && event.key.keysym.sym <= SDLK_4) {
-                GUI_instance->ExecutePromotion(event.key.keysym.sym - SDLK_1);
-            } else if (event.key.keysym.sym == SDLK_LEFT) {
-                GUI_instance->UndoUserMove();
-            } else if (event.key.keysym.sym == SDLK_ESCAPE) {
-                GUI_instance->running = false;
-            }
-            break;
-        default:
-            break;
-    }
-}
 
 void ChangePosition () {
     std::cin.get();
@@ -74,13 +44,7 @@ void StartGame () {
     GUI_instance->FetchMoves();
 
     while (GUI_instance->running) {
-        start_frame = SDL_GetTicks();
-
-        HandleEvents();
-        GUI_instance->ShowFrame();
-
-        frame_delta = SDL_GetTicks() - start_frame;
-        if (frame_delta < target_delta) SDL_Delay(target_delta - frame_delta);
+        GUI_instance->RunGUITick();
     }
 
     delete GUI_instance;
@@ -97,11 +61,8 @@ void StartAIGame () {
     GUI_instance->FetchMoves();
 
     while (GUI_instance->running) {
-        start_frame = SDL_GetTicks();
-
         if (board.IsWhiteToPlay()) {
-            HandleEvents();
-            GUI_instance->ShowFrame();
+            GUI_instance->RunGUITick();
         } else {
             Move comp_move = computer.PlayMove();
             if (comp_move != 0) {
@@ -111,9 +72,6 @@ void StartAIGame () {
                 board.color_to_play = SwitchColor(board.color_to_play);
             }
         }
-
-        frame_delta = SDL_GetTicks();
-        if (frame_delta < target_delta) SDL_Delay(target_delta - frame_delta);
     }
 
     delete GUI_instance;

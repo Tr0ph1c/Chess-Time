@@ -5,8 +5,8 @@
 #include "SDL2/SDL_image.h"
 #include "SDL2/SDL_ttf.h"
 
-#define BOARD_W 850
-#define BOARD_H 850
+#define BOARD_W 700
+#define BOARD_H 700
 
 #define BackgroundColor /*r*/22, /*g*/21, /*b*/18, /*a*/255
 
@@ -15,6 +15,11 @@ public:
 GUI (Board*);
 ~GUI ();
 
+void RunGUITick ();
+void FetchMoves ();
+bool running = true;
+
+private:
 Board* board;
 
 SDL_Window*  window;
@@ -62,7 +67,12 @@ std::vector<PosMove>* highlight_matrix[64];
 int selected_square = -1;
 bool is_user_promoting = false;
 int promotion_index = 0;
-bool running = true;
+
+SDL_Rect held_rect;
+
+int target_delta;
+Uint32 start_frame;
+int frame_delta;
 
 void Init (Board* _board);
 void InitRects ();
@@ -72,10 +82,11 @@ void InitTextures ();
 // void DrawArrow (int relevant_x ,int relevant_y ,bool is_to_right , SDL_Rect &parent);
 void DrawPieceInside (SDL_Rect & dest, int rank, int file);
 void DrawChessSquare (SDL_Color Color, int rank, int file);
+void RenderHeldPiece ();
 void RenderBoard ();
 void ShowFrame ();
+void HandleEvents ();
 
-void FetchMoves ();
 void InitializeHighlightMatrix ();
 void FreeHighlightMatrix ();
 void FillHighlightMatrix ();
@@ -89,7 +100,7 @@ void GiveUserPromotionChoice (int move_index);
 
 void UndoUserMove ();
 void HandleBoardClick (int x, int y);
-void Click (int x, int y);
+void Click (int x, int y, bool mouse_down);
 
 void Shutdown ();
 

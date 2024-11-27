@@ -46,7 +46,11 @@ void GUI::DrawChessSquare (SDL_Color Color, int rank /*y-axis*/, int file /*x-ax
         SDL_RenderFillRect(renderer, &SquareRect);
     }
 
-    DrawPieceInside(SquareRect, rank, file);
+    if (board->NotationToBoardIndex(rank, file) != selected_square) {
+        DrawPieceInside(SquareRect, rank, file);
+    } else {
+        held_rect = SquareRect;
+    }
 }
 
 void GUI::RenderBoard () {
@@ -65,6 +69,34 @@ void GUI::RenderBoard () {
             DrawChessSquare(HighlightColor, m.position / 8, m.position % 8);
         }
     }
+}
+
+void GUI::RenderHeldPiece () {
+    SDL_Rect dest;
+    dest.w = held_rect.w;
+    dest.h = held_rect.h;
+
+    if (SDL_BUTTON(SDL_GetMouseState(&dest.x, &dest.y)) != SDL_BUTTON_LEFT) {
+        dest.x = held_rect.x;
+        dest.y = held_rect.y;
+    } else {
+        dest.x -= 44;
+        dest.y -= 44;
+    }
+
+    int curr_piece = board->squares[selected_square];
+    if (!curr_piece) return;
+
+    int offset_y = IsWhite(curr_piece)? 0 : 88;
+    int offset_x = (RawPiece(curr_piece) - 1) * 88;
+
+    SDL_Rect rect;
+    rect.x = offset_x;
+    rect.y = offset_y;
+    rect.w = 87;
+    rect.h = 87;
+
+    SDL_RenderCopy(renderer, pieces_png, &rect, &dest);
 }
 
 void GUI::FetchMoves () {
@@ -162,17 +194,22 @@ void GUI::HandleBoardClick (int x, int y) {
     }
 }
 
-void GUI::Click (int x, int y) {
-
+void GUI::Click (int x, int y, bool mouse_down) {
     if (is_user_promoting) return;
 
-    if (    x < BoardRect.x ||
-            x > BoardRect.x+BoardRect.w ||
-            y < BoardRect.y ||
-            y > BoardRect.y + BoardRect.h)
+    // if outside board bounds
+    if (x < BoardRect.x ||
+        x > BoardRect.x+BoardRect.w ||
+        y < BoardRect.y ||
+        y > BoardRect.y + BoardRect.h)
         return;
 
-    HandleBoardClick(x,y);
+    if (mouse_down) {
+        HandleBoardClick(x, y);
+    } else {
+        if (IsSelected())
+            HandleBoardClick(x, y);
+    }
 }
 
 // NOTE:
@@ -199,11 +236,50 @@ void GUI::Click (int x, int y) {
 // //    SDL_RenderFillRect(renderer, &controlles);
 // }
 
+void GUI::HandleEvents () {
+    SDL_Event event;
+    SDL_PollEvent(&event);
+
+    switch (event.type) {
+        case SDL_QUIT:
+            running = false;
+            break;
+        case SDL_MOUSEBUTTONDOWN:
+            Click(event.button.x, event.button.y, true);
+            break;
+        case SDL_MOUSEBUTTONUP:
+            Click(event.button.x, event.button.y, false);
+            break;
+        case SDL_KEYDOWN:
+            if (event.key.keysym.sym >= SDLK_1 && event.key.keysym.sym <= SDLK_4) {
+                ExecutePromotion(event.key.keysym.sym - SDLK_1);
+            } else if (event.key.keysym.sym == SDLK_LEFT) {
+                UndoUserMove();
+            } else if (event.key.keysym.sym == SDLK_ESCAPE) {
+                running = false;
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+void GUI::RunGUITick () {
+    start_frame = SDL_GetTicks();
+
+    HandleEvents();
+    ShowFrame();
+
+    frame_delta = SDL_GetTicks() - start_frame;
+    if (frame_delta < target_delta) SDL_Delay(target_delta - frame_delta);
+}
+
 void GUI::ShowFrame () {
     SDL_SetRenderDrawColor(renderer, BackgroundColor);
     SDL_RenderClear(renderer);
 
     RenderBoard();
+    RenderHeldPiece();
     //RenderBoardRightSide();
     
     SDL_RenderPresent(renderer);
@@ -309,6 +385,16 @@ void GUI::Init (Board* _board) {
 
     InitTextures();
     InitRects();
+
+    // Get refresh rate of screen and set framerate of GUI refreshing
+    SDL_DisplayMode mode;
+    if (SDL_GetDisplayMode(0, 0, &mode) != 0) {
+        printf("Error getting refresh rate, defaulting to 60fps.\n\n");
+        target_delta = 1000 / 60;
+    } else {
+        printf("Initialized GUI successfully with a refresh rate of %dfps\n\n", mode.refresh_rate);
+        target_delta = 1000 / mode.refresh_rate;
+    }
 
     //components
     // Components::arrow_png = arrow_png;
