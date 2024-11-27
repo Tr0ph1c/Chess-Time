@@ -13,7 +13,7 @@
 #include "GUI.hpp"
 #include "AI.hpp"
 
-const int framerate = 30;
+const int framerate = 15;
 const int target_delta = 1000 / framerate;
 Uint32 start_frame;
 int frame_delta;
@@ -21,7 +21,7 @@ GUI* GUI_instance;
 
 Board board;
 char position[90] = "X"; // "X" means startpos
-char *help_str =
+char help_str[] =
         "exit             : exits the program.\n"
         "position [FEN/X] : sets the position to [FEN], only accepts valid FEN strings\n"
         "start            : starts a GUI board with the position from position.\n"
