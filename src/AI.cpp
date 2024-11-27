@@ -18,7 +18,6 @@ Move AI::PlayMove () {
 
     if (legal_moves.Empty()) {
         printf("You won!");
-        return;
     }
 
     std::uniform_int_distribution<int> irando(0, legal_moves.Size() - 1);

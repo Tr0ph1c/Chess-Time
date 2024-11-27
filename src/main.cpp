@@ -93,8 +93,13 @@ void StartAIGame () {
             HandleEvents();
             GUI_instance->ShowFrame();
         } else {
-            board.ExecuteMove(computer.PlayMove());
-            GUI_instance->FetchMoves();
+            Move comp_move = computer.PlayMove();
+            if (comp_move != 0) {
+                board.ExecuteMove(comp_move);
+                GUI_instance->FetchMoves();
+            } else {
+                board.color_to_play = SwitchColor(board.color_to_play);
+            }
         }
 
         frame_delta = SDL_GetTicks();

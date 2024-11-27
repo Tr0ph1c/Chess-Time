@@ -19,8 +19,7 @@ class MoveArray {
     static const int MAX_SIZE = 256;
 
     public:
-    void operator= (MoveArray&&) = delete;
-    void operator= (MoveArray&) = delete;
+    MoveArray& operator=(const MoveArray) = delete;
     Move operator[] (size_t);
     Move At (size_t);
     
