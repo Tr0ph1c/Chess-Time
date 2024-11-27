@@ -1,3 +1,11 @@
+// TODO:
+// 1) Clean up GUI code
+//  - Store any static values instead of calculating them every frame
+//  - Simplify internal logic
+// 2) Show copyable PGN inside the game window
+// 3) Finish up the components system
+// 4) Add "game viewing" functionality to be able to seek through the game
+
 #include "GUI.hpp"
 // #include "Components.cpp" UNDER DEVELOPMENT
 

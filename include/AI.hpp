@@ -6,7 +6,7 @@
 #include <limits>
 
 class AI {
-    const int INFINITY = std::numeric_limits<int>::max();
+    const int AI_INFINITY = std::numeric_limits<int>::max();
     const int queen_value = 900;
     const int rook_value = 500;
     const int bishop_value = 320;

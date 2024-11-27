@@ -114,7 +114,7 @@ void Board::RestartBoard (const char* position) {
 // 2) Before creating any other piece's move check if the final square is
 // on the "check path"
 // 3) If the king is double checked only the king is allowed to move
-void Board::GetAllMoves (MoveArray* moves) {
+void Board::GetAllMoves (SizeArray<Move>* moves) {
     moves->Clear();
     check_path.Clear();
     pins.clear();
@@ -202,11 +202,11 @@ void Board::GetAllMoves (MoveArray* moves) {
                 if (next_square >= 0 && next_square < 64) {
                     if (abs(start_file - next_file) < 2) {
                         if (squares[next_square] == EMPTY) {
-                            if (!IsSquareAttacked(next_square)) moves->AddMove(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights));
+                            if (!IsSquareAttacked(next_square)) moves->AddValue(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights));
                         } else if (IsAllyPiece(squares[next_square])) {
                             continue;
                         } else if (IsEnemyPiece(squares[next_square])) {
-                            if (!IsSquareAttacked(next_square)) moves->AddMove(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]));
+                            if (!IsSquareAttacked(next_square)) moves->AddValue(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]));
                         }
                     }   
                 }
@@ -222,7 +222,7 @@ void Board::GetAllMoves (MoveArray* moves) {
                         break;
                     }
                     if (IsSquareAttacked(WKSC_SQUARE - 1) || IsSquareAttacked(WKSC_SQUARE)) K = false;
-                    if (K) moves->AddMove(CreateMove(start_square, WKSC_SQUARE, CASTLE_KS, curr_castle_rights));
+                    if (K) moves->AddValue(CreateMove(start_square, WKSC_SQUARE, CASTLE_KS, curr_castle_rights));
                 }
                 if (castling_rights & 0b0100) {
                     for (uint8_t s : white_queenside) {
@@ -231,7 +231,7 @@ void Board::GetAllMoves (MoveArray* moves) {
                         break;
                     }
                     if (IsSquareAttacked(WQSC_SQUARE + 1) || IsSquareAttacked(WQSC_SQUARE)) Q = false;
-                    if (Q) moves->AddMove(CreateMove(start_square, WQSC_SQUARE, CASTLE_QS, curr_castle_rights));
+                    if (Q) moves->AddValue(CreateMove(start_square, WQSC_SQUARE, CASTLE_QS, curr_castle_rights));
                 }
             } else {
                 if (castling_rights & 0b0010) {
@@ -241,7 +241,7 @@ void Board::GetAllMoves (MoveArray* moves) {
                         break;
                     }
                     if (IsSquareAttacked(BKSC_SQUARE - 1) || IsSquareAttacked(BKSC_SQUARE)) K = false;
-                    if (K) moves->AddMove(CreateMove(start_square, BKSC_SQUARE, CASTLE_KS, curr_castle_rights));
+                    if (K) moves->AddValue(CreateMove(start_square, BKSC_SQUARE, CASTLE_KS, curr_castle_rights));
                 }
                 if (castling_rights & 0b0001) {
                     for (uint8_t s : black_queenside) {
@@ -250,7 +250,7 @@ void Board::GetAllMoves (MoveArray* moves) {
                         break;
                     }
                     if (IsSquareAttacked(BQSC_SQUARE + 1) || IsSquareAttacked(BQSC_SQUARE)) Q = false;
-                    if (Q) moves->AddMove(CreateMove(start_square, BQSC_SQUARE, CASTLE_QS, curr_castle_rights));
+                    if (Q) moves->AddValue(CreateMove(start_square, BQSC_SQUARE, CASTLE_QS, curr_castle_rights));
                 }
             }
             }
@@ -326,12 +326,12 @@ void Board::GetAllMoves (MoveArray* moves) {
                 abs(start_file - first_diagonal%8) == 1) {
                     Move epm = CreateMove(start_square, first_diagonal, EN_PASSANT, curr_castle_rights, PAWN);
                     if (!MoveWillExposeKing(epm))
-                        moves->AddMove(epm); // no more checking needed since it wont leave the king in check
+                        moves->AddValue(epm); // no more checking needed since it wont leave the king in check
                 } else if(second_diagonal == enpassant_place &&
                 abs(start_file - second_diagonal%8) == 1) {
                     Move epm = CreateMove(start_square, second_diagonal, EN_PASSANT, curr_castle_rights, PAWN);
                     if (!MoveWillExposeKing(epm))
-                        moves->AddMove(epm);
+                        moves->AddValue(epm);
                 }
             }
         }
@@ -350,7 +350,7 @@ void Board::GetCheckPathAndPins () {
         if (abs(square_index%8 - next_square%8) > 2) continue;
         if (squares[next_square] == (KNIGHT | opp_color)) {
             is_single_checked = true;
-            check_path.AddMove(next_square);
+            check_path.AddValue(next_square);
         }
     }
 
@@ -388,7 +388,7 @@ void Board::GetCheckPathAndPins () {
                         }
                         is_single_checked = true;
                         for (int j = 0; j <= i; ++j) {
-                            check_path.AddMove(square_index + (directions[diri] * (j + 1)));
+                            check_path.AddValue(square_index + (directions[diri] * (j + 1)));
                         }
                         break;
                     }
@@ -686,43 +686,51 @@ void GameTracker::ResetTracker() {
     //curr_pos = Moves.end();
 }
 
-// ====================   MoveArray   =========================== //
+// ====================   SizeArray   =========================== //
 
-MoveArray::MoveArray () {
-    array = static_cast<Move*>(malloc(MAX_SIZE * sizeof(Move)));
+template<typename T>
+SizeArray<T>::SizeArray () {
+    array = static_cast<T*>(malloc(MAX_SIZE * sizeof(T)));
     capacity = MAX_SIZE;
 }
 
-MoveArray::MoveArray (size_t _size) {
-    array = static_cast<Move*>(malloc(_size * sizeof(Move)));
+template<typename T>
+SizeArray<T>::SizeArray (size_t _size) {
+    array = static_cast<T*>(malloc(_size * sizeof(T)));
     capacity = _size;
 }
 
-MoveArray::~MoveArray () {
+template<typename T>
+SizeArray<T>::~SizeArray () {
     delete array;
 }
 
-Move MoveArray::operator[] (size_t index) {
+template<typename T>
+T SizeArray<T>::operator[] (size_t index) {
     if (index + 1 > size) return 0;
     return array[index];
 }
 
-Move MoveArray::At (size_t index) {
+template<typename T>
+T SizeArray<T>::At (size_t index) {
     if (index + 1 > size) return 0;
     return array[index];
 }
 
-size_t MoveArray::Size () {
+template<typename T>
+size_t SizeArray<T>::Size () {
     return size;
 }
 
-void MoveArray::AddMove (Move m) {
+template<typename T>
+void SizeArray<T>::AddValue (T val) {
     if (capacity == size) return;
-    array[size] = m;
+    array[size] = val;
     size++;
 }
 
-void MoveArray::AddRestrictedMove (Move m, MoveArray* path) {
+template<typename T>
+void SizeArray<T>::AddRestrictedMove (Move m, SizeArray<Move>* path) {
     if (capacity == size) return;
     if (!path->Empty()) {
         for (size_t i = 0; i < path->Size(); ++i) {
@@ -738,15 +746,26 @@ void MoveArray::AddRestrictedMove (Move m, MoveArray* path) {
     }
 }
 
-void MoveArray::Trim () {
-    array = static_cast<Move*>(realloc(array, size * sizeof(Move)));
+template<typename T>
+void SizeArray<T>::Trim () {
+    array = static_cast<T*>(realloc(array, size * sizeof(T)));
     capacity = size;
 }
 
-void MoveArray::Clear () {
+template<typename T>
+void SizeArray<T>::Clear () {
     size = 0;
 }
 
-bool MoveArray::Empty () {
+template<typename T>
+bool SizeArray<T>::Empty () {
     return size == 0;
 }
+
+// When I compile without these two lines, the compiler generates a linker error.
+//
+// Solution from: https://isocpp.org/wiki/faq/templates#templates-defn-vs-decl
+// "...The other solution is to leave the definition of the template function in the .cpp file and simply add
+// the line "template class Foo<int>;" to that file..."
+template class SizeArray<int>;
+template class SizeArray<Move>;
