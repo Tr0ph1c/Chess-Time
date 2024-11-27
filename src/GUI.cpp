@@ -211,10 +211,10 @@ void GUI::ShowFrame () {
 
 void GUI::InitRects () {
     {
-        BoardRect.w = std::min(WINDOW_W, WINDOW_H);
+        BoardRect.w = std::min(BOARD_W, BOARD_H);
         BoardRect.h = BoardRect.w;
-        BoardRect.x = WINDOW_W /2 - BoardRect.w/2;
-        BoardRect.y = 0;
+        BoardRect.x = window_w / 2 - BoardRect.w / 2;
+        BoardRect.y = window_h / 2 - BoardRect.h / 2;
     }
 
     {
@@ -259,13 +259,20 @@ void GUI::Init (Board* _board) {
     }
 
     SDL_Init(SDL_INIT_VIDEO);
+    SDL_DisplayMode DM;
+    SDL_GetCurrentDisplayMode(0, &DM);
+    screen_w = DM.w;
+    screen_h = DM.h;
+
+    window_w = BOARD_W;
+    window_h = BOARD_H;
 
     window = SDL_CreateWindow (
         "Chess Time",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        WINDOW_W, // W
-        WINDOW_H, // H
+        window_w, // W
+        window_h, // H
         SDL_WINDOW_INPUT_FOCUS | SDL_WINDOW_MOUSE_FOCUS
     );
 

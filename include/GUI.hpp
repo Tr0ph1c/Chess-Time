@@ -5,8 +5,8 @@
 #include "SDL2/SDL_image.h"
 #include "SDL2/SDL_ttf.h"
 
-#define WINDOW_W 700
-#define WINDOW_H 700
+#define BOARD_W 850
+#define BOARD_H 850
 
 #define BackgroundColor /*r*/22, /*g*/21, /*b*/18, /*a*/255
 
@@ -19,6 +19,10 @@ Board* board;
 
 SDL_Window*  window;
 SDL_Renderer* renderer;
+int window_w;
+int window_h;
+int screen_w;
+int screen_h;
 
 // TEXTURES
 SDL_Texture* pieces_png;

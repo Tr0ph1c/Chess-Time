@@ -13,7 +13,7 @@
 #include "GUI.hpp"
 #include "AI.hpp"
 
-const int framerate = 15;
+const int framerate = 30;
 const int target_delta = 1000 / framerate;
 Uint32 start_frame;
 int frame_delta;
@@ -46,6 +46,8 @@ void HandleEvents () {
                 GUI_instance->ExecutePromotion(event.key.keysym.sym - SDLK_1);
             } else if (event.key.keysym.sym == SDLK_LEFT) {
                 GUI_instance->UndoUserMove();
+            } else if (event.key.keysym.sym == SDLK_ESCAPE) {
+                GUI_instance->running = false;
             }
             break;
         default:
@@ -77,7 +79,7 @@ void StartGame () {
         HandleEvents();
         GUI_instance->ShowFrame();
 
-        frame_delta = SDL_GetTicks();
+        frame_delta = SDL_GetTicks() - start_frame;
         if (frame_delta < target_delta) SDL_Delay(target_delta - frame_delta);
     }
 
