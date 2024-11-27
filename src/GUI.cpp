@@ -72,14 +72,10 @@ void GUI::RenderBoard () {
 }
 
 void GUI::RenderHeldPiece () {
-    SDL_Rect dest;
-    dest.w = held_rect.w;
-    dest.h = held_rect.h;
+    SDL_Rect dest = held_rect;
 
-    if (SDL_BUTTON(SDL_GetMouseState(&dest.x, &dest.y)) != SDL_BUTTON_LEFT) {
-        dest.x = held_rect.x;
-        dest.y = held_rect.y;
-    } else {
+    if (!is_user_promoting && SDL_BUTTON(SDL_GetMouseState(NULL, NULL)) == SDL_BUTTON_LEFT) {
+        SDL_GetMouseState(&dest.x, &dest.y);
         dest.x -= 44;
         dest.y -= 44;
     }
@@ -280,6 +276,7 @@ void GUI::ShowFrame () {
 
     RenderBoard();
     RenderHeldPiece();
+    if (is_user_promoting) SDL_RenderCopy(renderer, promo_tip_png, NULL, &promotion_tip);
     //RenderBoardRightSide();
     
     SDL_RenderPresent(renderer);
@@ -296,8 +293,8 @@ void GUI::InitRects () {
     {
         promotion_tip.h = 200;
         promotion_tip.w = 200;
-        promotion_tip.x = BoardRect.x + BoardRect.w + 50;
-        promotion_tip.y = BoardRect.y - (promotion_tip.h / 2) + (BoardRect.h / 2);
+        promotion_tip.x = 20;
+        promotion_tip.y = BoardRect.w / 2 - promotion_tip.h / 2;
     }
 
     {
@@ -318,6 +315,8 @@ void GUI::InitTextures () {
     SDL_SetTextureScaleMode(pieces_png, SDL_ScaleModeBest);
     //SDL_SetTextureScaleMode(arrow_png , SDL_ScaleModeBest);
     SDL_SetTextureScaleMode(promo_tip_png , SDL_ScaleModeBest);
+
+    SDL_SetTextureAlphaMod(promo_tip_png, 180);
 
     if (!pieces_png || !promo_tip_png) {
         fprintf(stderr, "An image could not be loaded.\n");
