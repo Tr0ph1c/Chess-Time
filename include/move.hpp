@@ -7,8 +7,8 @@ typedef uint32_t Move;
 
 // 23-bit representation of a move:
 // ===============================
-//   000           0000          0000       000000       000000
-// captured    castle rights     flags     start_pos    final_pos
+//   000       000           0000          0000       000000       000000
+//  moved    captured    castle rights     flags     start_pos    final_pos
 //
 // Castling Rights:
 // KQkq
@@ -48,7 +48,7 @@ enum MOVE_FLAG {
     PROMO_ROOK   = 0b1011
 };
 
-Move CreateMove   (uint8_t _start, uint8_t _final, uint8_t _flags, uint8_t _castle_rights, Piece _captured = EMPTY);
+Move CreateMove   (uint8_t _start, uint8_t _final, uint8_t _flags, uint8_t _castle_rights, Piece moved ,Piece _captured = EMPTY );
 
 bool IsNormalMove     (Move);
 bool IsCapture        (Move);
@@ -59,10 +59,12 @@ bool IsQSCastle       (Move);
 bool IsDoublePawn     (Move);
 
 inline uint32_t GetStartPos     (Move m) { return (m >> 6) & 0x3F; }
-inline uint32_t GetFinalPos     (Move m) { return m & 0x3F; }
-inline int GetFlags        (Move m) { return (m >> 12) & 0xF; }
-inline int GetCastleRights (Move m) { return (m >> 16) & 0xF; }
+inline uint32_t GetFinalPos     (Move m) { return        m & 0x3F; }
+inline int GetFlags             (Move m) { return (m >> 12) & 0xF; }
+inline int GetCastleRights      (Move m) { return (m >> 16) & 0xF; }
 
 Piece GetPromotionPieceFromMove (Move);
 Piece GetCapturedPieceFromMove  (Move); // returns raw piece
+Piece GetMovedPieceFromMove     (Move); // returns raw piece
 std::string GetNotationFromMove (Move);
+std::string GetPGNFromMove      (Move);
