@@ -166,7 +166,7 @@ void Board::GetAllMoves (SizeArray* moves) {
                     } else if (IsAllyPiece(squares[next_square])) {
                         break;
                     } else if (IsEnemyPiece(squares[next_square])) {
-                        moves->AddRestrictedMove(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights,_raw, squares[next_square]), &check_path);
+                        moves->AddRestrictedMove(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, _raw, squares[next_square]), &check_path);
                         break;
                     }
                 }
@@ -220,7 +220,7 @@ void Board::GetAllMoves (SizeArray* moves) {
             }
 
             bool K = true, Q = true;
-            if (!IsInCheck() && !is_double_checked) {
+            if (!IsInCheck()) {
             if (IsWhiteToPlay()) {
                 if (castling_rights & 0b1000) {
                     for (uint8_t s : white_kingside) {
