@@ -98,11 +98,11 @@ class Board {
     void LoadBoard (const char* FEN);
     void RestartBoard(const char* position = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     
-    inline bool IsWhiteToPlay () { return color_to_play == WHITE; };
-    inline bool IsEnemyPiece (Piece p) { return p & (SwitchColor(color_to_play)); }
-    inline bool IsAllyPiece (Piece p) { return p & color_to_play; }
-    inline bool IsOfColor   (Piece p, Piece col) { return p & col; }
-    inline bool EnPassantExists () { return enpassant_place != -1; }
+    inline bool IsWhiteToPlay ()                  { return color_to_play == WHITE; };
+    inline bool IsEnemyPiece (Piece p)            { return p & (SwitchColor(color_to_play)); }
+    inline bool IsAllyPiece  (Piece p)            { return p & color_to_play; }
+    inline bool IsOfColor    (Piece p, Piece col) { return p & col; }
+    inline bool EnPassantExists ()                { return enpassant_place != -1; }
 
     //void EndTurn ();
 
@@ -120,6 +120,8 @@ class Board {
     static int HalfMovesToFullMoves (int);
     static int NotationToBoardIndex (int, char);
     static int NotationToBoardIndex (int, int);
+
+    std::string ExportPGN();
 };
 
 class HelperClass {

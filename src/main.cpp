@@ -23,7 +23,9 @@ char help_str[] =
         "start            : starts a GUI board with the position from position.\n"
         "startai          : starts a game against an AI adversary.\n"
         "perft [depth]    : starts an iterative perft test starting from position till [depth] and prints the results.\n"
-        "divide [depth]   : outputs the perft result for the sub-tree of each move in the current position. \n";
+        "divide [depth]   : outputs the perft result for the sub-tree of each move in the current position. \n"
+        "get-pgn          : outputs the played game as pgn. \n"
+        "copy-pgn         : copy the pgn of played game to the clipboard \n";
 
 void ChangePosition () {
     std::cin.get();
@@ -132,6 +134,18 @@ void StartDivPerft (int max_depth) {
 void PrintHelp(){
     std::cout << help_str;
 }
+void CopyPGN(){
+
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        std::cerr << "SDL Initialization Error: " << SDL_GetError() << std::endl;
+    }
+    if(SDL_SetClipboardText(board.ExportPGN().c_str()) == 0){ // Returns 0 on success or a negative error code on failure
+        std::cout << "pgn copied successfully\n";
+    }else{
+        std::cout << "cannot copy pgn\n";
+    }
+    SDL_Quit();
+}
 
 int main (int argc, char** args) {
     while (true) {
@@ -159,6 +173,10 @@ int main (int argc, char** args) {
                 ChangePosition();
             } else if (command == "help") {
                  PrintHelp();
+            } else if (command == "copy-pgn") {
+                CopyPGN();
+            } else if (command == "get-pgn") {
+                 std::cout << board.ExportPGN();
             } else {
                 printf("Unknown command\n");
             }
