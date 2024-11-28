@@ -5,7 +5,7 @@
 #include "piece.hpp"
 
 //I use this function for debugging
-std::string bin (Move m){
+std::string bin (Move m) {
     int datasz[] =
     { 3    ,3         ,4        ,4      ,6       , 6  } ;
     //   000       000           0000          0000       000000       000000
@@ -36,8 +36,8 @@ std::string bin (Move m){
     return final;
 }
 
-Move CreateMove (uint8_t _start_pos, uint8_t _final_pos, uint8_t _flags, uint8_t _castle_rights,Piece moved ,Piece _captured ) {
-    return ((((((((RawPiece(_captured) << 4) | _castle_rights) << 4) | _flags) << 6) | _start_pos) << 6) | _final_pos) | (moved << 23);
+Move CreateMove (uint8_t _start_pos, uint8_t _final_pos, uint8_t _flags, uint8_t _castle_rights, Piece _moved, Piece _captured) {
+    return (_final_pos) | (_start_pos << 6) | (_flags << 12) | (_castle_rights << 16) | (_captured << 20) | (_moved << 23);
 }
 
 bool IsNormalMove (Move m) {
@@ -94,13 +94,14 @@ std::string GetNotationFromMove (Move m) {
     std::string s;
     return  s + (char)(GetStartPos(m) % 8 + 'a'+1) + std::to_string(GetStartPos(m) / 8 + 1) + (char)(GetFinalPos(m) % 8 + 'a') + std::to_string(GetFinalPos(m) / 8 + 1);
 }
-char GetPosFile(uint32_t pos){
+
+char GetPosFile(uint32_t pos) {
     return (char)((pos % 8) + 'a');
 }
-char GetPosRank(uint32_t pos){
+
+char GetPosRank(uint32_t pos) {
     return (char)(pos / 8 + '1');
 }
-
 
 std::string GetPGNFromMove (Move m) {
     std::stringstream ss;
