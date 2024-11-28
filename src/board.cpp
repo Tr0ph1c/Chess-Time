@@ -5,6 +5,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <sstream>
 
 // TODO:
 // store the indicies that pieces are on instead of looping over whole board everytime
@@ -22,6 +23,10 @@ void Board::PrintBoard () {
         fifty_move_rule,
         HalfMovesToFullMoves(half_moves));
 }
+std::string Board::ExportPGN(){
+    return tracker.ExportPGN();
+}
+
 
 // TODO:
 // Stress test the LoadBoard function.
@@ -157,16 +162,17 @@ void Board::GetAllMoves (SizeArray* moves) {
                     int next_square = start_square + (directions[diri] * (i + 1));
                     
                     if (squares[next_square] == EMPTY) {
-                        moves->AddRestrictedMove(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights), &check_path);
+                        moves->AddRestrictedMove(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights , _raw), &check_path);
                     } else if (IsAllyPiece(squares[next_square])) {
                         break;
                     } else if (IsEnemyPiece(squares[next_square])) {
-                        moves->AddRestrictedMove(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]), &check_path);
+                        moves->AddRestrictedMove(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights,_raw, squares[next_square]), &check_path);
                         break;
                     }
                 }
             }
-        } else if (_raw == KNIGHT && !is_double_checked) {
+        }
+        else if (_raw == KNIGHT && !is_double_checked) {
             for (int move : knight_moves) {
                 int next_square = start_square + move;
                 int next_file = next_square % 8;
@@ -184,17 +190,18 @@ void Board::GetAllMoves (SizeArray* moves) {
                     if (next_square >= 0 && next_square < 64) { // Make sure its on the board
                         if (abs(start_file - next_file) < 3) {  // Make sure no warping
                             if (squares[next_square] == EMPTY) {
-                                moves->AddRestrictedMove(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights), &check_path);
+                                moves->AddRestrictedMove(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights , _raw), &check_path);
                             } else if (IsAllyPiece(squares[next_square])) {
                                 continue;
                             } else if (IsEnemyPiece(squares[next_square])) {
-                                moves->AddRestrictedMove(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]), &check_path);
+                                moves->AddRestrictedMove(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights,_raw, squares[next_square]), &check_path);
                             }
                         }
                     }
                 }
             }
-        } else if (_raw == KING) {
+        }
+        else if (_raw == KING) {
             for (int dir = 0; dir < 8; ++dir) {
                 int next_square = start_square + directions[dir];
                 int next_file = next_square % 8;
@@ -202,11 +209,11 @@ void Board::GetAllMoves (SizeArray* moves) {
                 if (next_square >= 0 && next_square < 64) {
                     if (abs(start_file - next_file) < 2) {
                         if (squares[next_square] == EMPTY) {
-                            if (!IsSquareAttacked(next_square)) moves->AddValue(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights));
+                            if (!IsSquareAttacked(next_square)) moves->AddValue(CreateMove(start_square, next_square, QUIET_MOVE, curr_castle_rights , _raw));
                         } else if (IsAllyPiece(squares[next_square])) {
                             continue;
                         } else if (IsEnemyPiece(squares[next_square])) {
-                            if (!IsSquareAttacked(next_square)) moves->AddValue(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, squares[next_square]));
+                            if (!IsSquareAttacked(next_square)) moves->AddValue(CreateMove(start_square, next_square, CAPTURE_MOVE, curr_castle_rights, _raw ,squares[next_square]));
                         }
                     }   
                 }
@@ -223,7 +230,7 @@ void Board::GetAllMoves (SizeArray* moves) {
                     }
                     if (K) {
                         if (!IsSquareAttacked(WKSC_SQUARE - 1) && !IsSquareAttacked(WKSC_SQUARE)) {
-                            moves->AddValue(CreateMove(start_square, WKSC_SQUARE, CASTLE_KS, curr_castle_rights));
+                            moves->AddValue(CreateMove(start_square, WKSC_SQUARE, CASTLE_KS, curr_castle_rights ,_raw));
                         }
                     }
                 }
@@ -235,7 +242,7 @@ void Board::GetAllMoves (SizeArray* moves) {
                     }
                     if (Q) {
                         if (!IsSquareAttacked(WQSC_SQUARE + 1) && !IsSquareAttacked(WQSC_SQUARE)) {
-                            moves->AddValue(CreateMove(start_square, WQSC_SQUARE, CASTLE_QS, curr_castle_rights));
+                            moves->AddValue(CreateMove(start_square, WQSC_SQUARE, CASTLE_QS, curr_castle_rights , _raw));
                         }
                     }
                 }
@@ -248,7 +255,7 @@ void Board::GetAllMoves (SizeArray* moves) {
                     }
                     if (K) {
                         if (!IsSquareAttacked(BKSC_SQUARE - 1) && !IsSquareAttacked(BKSC_SQUARE)) {
-                            moves->AddValue(CreateMove(start_square, BKSC_SQUARE, CASTLE_KS, curr_castle_rights));
+                            moves->AddValue(CreateMove(start_square, BKSC_SQUARE, CASTLE_KS, curr_castle_rights, _raw));
                         }
                     }
                 }
@@ -260,13 +267,14 @@ void Board::GetAllMoves (SizeArray* moves) {
                     }
                     if (Q) {
                         if (!IsSquareAttacked(BQSC_SQUARE + 1) && !IsSquareAttacked(BQSC_SQUARE)) {
-                            moves->AddValue(CreateMove(start_square, BQSC_SQUARE, CASTLE_QS, curr_castle_rights));
+                            moves->AddValue(CreateMove(start_square, BQSC_SQUARE, CASTLE_QS, curr_castle_rights, _raw));
                         }
                     }
                 }
             }
             }
-        } else if (_raw == PAWN && !is_double_checked) {
+        }
+        else if (_raw == PAWN && !is_double_checked) {
             short dir = (IsWhiteToPlay())? 1 : -1;
             short rank = start_square / 8;
             int forward_square = start_square + dir*8;
@@ -280,10 +288,10 @@ void Board::GetAllMoves (SizeArray* moves) {
             // This may not be the best way to create a structure that user input
             // relies on but is what we got for now.
             auto add_promotion_moves = [&](int to_square, int flags, int captured = EMPTY) {
-                moves->AddRestrictedMove(CreateMove(start_square, to_square, flags | PROMO_QUEEN, curr_castle_rights, captured), &check_path);
-                moves->AddRestrictedMove(CreateMove(start_square, to_square, flags | PROMO_BISHOP, curr_castle_rights, captured), &check_path);
-                moves->AddRestrictedMove(CreateMove(start_square, to_square, flags | PROMO_KNIGHT, curr_castle_rights, captured), &check_path);
-                moves->AddRestrictedMove(CreateMove(start_square, to_square, flags | PROMO_ROOK, curr_castle_rights, captured), &check_path);
+                moves->AddRestrictedMove(CreateMove(start_square, to_square, flags | PROMO_QUEEN, curr_castle_rights, _raw,captured), &check_path);
+                moves->AddRestrictedMove(CreateMove(start_square, to_square, flags | PROMO_BISHOP, curr_castle_rights, _raw,captured), &check_path);
+                moves->AddRestrictedMove(CreateMove(start_square, to_square, flags | PROMO_KNIGHT, curr_castle_rights, _raw,captured), &check_path);
+                moves->AddRestrictedMove(CreateMove(start_square, to_square, flags | PROMO_ROOK, curr_castle_rights, _raw,captured), &check_path);
             };
 
             // If this pawn is pinned any which way,
@@ -301,9 +309,9 @@ void Board::GetAllMoves (SizeArray* moves) {
                     if (is_next_rank_promo) {
                         add_promotion_moves(forward_square, QUIET_MOVE);
                     } else {
-                        moves->AddRestrictedMove(CreateMove(start_square, forward_square, QUIET_MOVE, curr_castle_rights), &check_path);
+                        moves->AddRestrictedMove(CreateMove(start_square, forward_square, QUIET_MOVE, curr_castle_rights , _raw), &check_path);
                         if (is_first_move && squares[start_square + dir*16] == EMPTY)
-                            moves->AddRestrictedMove(CreateMove(start_square, start_square + dir*16, DOUBLE_PAWN, curr_castle_rights), &check_path);
+                            moves->AddRestrictedMove(CreateMove(start_square, start_square + dir*16, DOUBLE_PAWN, curr_castle_rights , _raw), &check_path);
                     }
                 }
             }
@@ -316,7 +324,7 @@ void Board::GetAllMoves (SizeArray* moves) {
                     if (is_next_rank_promo) {
                         add_promotion_moves(first_diagonal, CAPTURE_MOVE, squares[first_diagonal]);
                     } else {
-                        moves->AddRestrictedMove(CreateMove(start_square, first_diagonal, CAPTURE_MOVE, curr_castle_rights, squares[first_diagonal]), &check_path);
+                        moves->AddRestrictedMove(CreateMove(start_square, first_diagonal, CAPTURE_MOVE, curr_castle_rights, _raw,squares[first_diagonal]), &check_path);
                     }
                 }
             }
@@ -327,7 +335,7 @@ void Board::GetAllMoves (SizeArray* moves) {
                     if (is_next_rank_promo) {
                         add_promotion_moves(second_diagonal, CAPTURE_MOVE, squares[second_diagonal]);
                     } else {
-                        moves->AddRestrictedMove(CreateMove(start_square, second_diagonal, CAPTURE_MOVE, curr_castle_rights, squares[second_diagonal]), &check_path);
+                        moves->AddRestrictedMove(CreateMove(start_square, second_diagonal, CAPTURE_MOVE, curr_castle_rights, _raw,squares[second_diagonal]), &check_path);
                     }
                 }
             }
@@ -336,12 +344,12 @@ void Board::GetAllMoves (SizeArray* moves) {
             if (EnPassantExists()) {
                 if (first_diagonal == enpassant_place &&
                 abs(start_file - first_diagonal%8) == 1) {
-                    Move epm = CreateMove(start_square, first_diagonal, EN_PASSANT, curr_castle_rights, PAWN);
+                    Move epm = CreateMove(start_square, first_diagonal, EN_PASSANT, curr_castle_rights, _raw,PAWN);
                     if (!MoveWillExposeKing(epm))
                         moves->AddValue(epm); // no more checking needed since it wont leave the king in check
                 } else if(second_diagonal == enpassant_place &&
                 abs(start_file - second_diagonal%8) == 1) {
-                    Move epm = CreateMove(start_square, second_diagonal, EN_PASSANT, curr_castle_rights, PAWN);
+                    Move epm = CreateMove(start_square, second_diagonal, EN_PASSANT, curr_castle_rights, _raw, PAWN);
                     if (!MoveWillExposeKing(epm))
                         moves->AddValue(epm);
                 }
@@ -681,7 +689,15 @@ void GameTracker::ImportPGN(std::string PGN){
 }
 
 std::string GameTracker::ExportPGN(){
-    return "NOT FINISHED";
+    std::stringstream ss;
+    int move_number = 1, i = 1;
+    for (auto it = move_history.begin(); it != move_history.end() ; ++it) {
+        if (i++ % 2)
+            ss << '\n' << move_number++ <<". ";
+        ss << GetPGNFromMove(*it) << " ";
+    }
+    ss << '\n';
+    return ss.str();
 }
 
 void GameTracker::PrintTracker () {
