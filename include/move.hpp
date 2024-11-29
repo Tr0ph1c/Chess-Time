@@ -48,19 +48,22 @@ enum MOVE_FLAG {
     PROMO_ROOK   = 0b1011
 };
 
-Move CreateMove   (uint8_t _start, uint8_t _final, uint8_t _flags, uint8_t _castle_rights, Piece moved ,Piece _captured = EMPTY );
+Move CreateMove (uint32_t _start, uint32_t _final, uint32_t _flags, uint32_t _castle_rights, uint32_t _moved, uint32_t _captured = EMPTY);
 
-bool IsNormalMove     (Move);
-bool IsCapture        (Move);
-bool IsEnPassant      (Move);
-bool IsPromotion      (Move);
-bool IsKSCastle       (Move);
-bool IsQSCastle       (Move);
-bool IsDoublePawn     (Move);
+/*
+Shorthands for analyzing flags
+*/
+bool IsNormalMove     (uint8_t);
+bool IsCapture        (uint8_t);
+bool IsEnPassant      (uint8_t);
+bool IsPromotion      (uint8_t);
+bool IsKSCastle       (uint8_t);
+bool IsQSCastle       (uint8_t);
+bool IsDoublePawn     (uint8_t);
 
 inline uint32_t GetStartPos     (Move m) { return (m >> 6) & 0x3F; }
 inline uint32_t GetFinalPos     (Move m) { return        m & 0x3F; }
-inline int GetFlags             (Move m) { return (m >> 12) & 0xF; }
+inline uint8_t  GetFlags        (Move m) { return (m >> 12) & 0xF; }
 inline int GetCastleRights      (Move m) { return (m >> 16) & 0xF; }
 
 Piece GetPromotionPieceFromMove (Move);
@@ -68,3 +71,7 @@ Piece GetCapturedPieceFromMove  (Move); // returns raw piece
 Piece GetMovedPieceFromMove     (Move); // returns raw piece
 std::string GetNotationFromMove (Move);
 std::string GetPGNFromMove      (Move);
+// Takes board index and returns char for file
+char GetPosFile (uint32_t);
+// Takes board index and returns char for rank
+char GetPosRank (uint32_t);

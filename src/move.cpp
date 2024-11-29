@@ -36,36 +36,36 @@ std::string bin (Move m) {
     return final;
 }
 
-Move CreateMove (uint8_t _start_pos, uint8_t _final_pos, uint8_t _flags, uint8_t _castle_rights, Piece _moved, Piece _captured) {
+Move CreateMove (uint32_t _start_pos, uint32_t _final_pos, uint32_t _flags, uint32_t _castle_rights, uint32_t _moved, uint32_t _captured) {
     return (_final_pos) | (_start_pos << 6) | (_flags << 12) | (_castle_rights << 16) | (_captured << 20) | (_moved << 23);
 }
 
-bool IsNormalMove (Move m) {
-    return !(GetFlags(m));
+bool IsNormalMove (uint8_t mf) {
+    return !mf;
 }
 
-bool IsCapture (Move m) {
-    return GetFlags(m) & CAPTURE_MOVE;
+bool IsCapture (uint8_t mf) {
+    return mf & CAPTURE_MOVE;
 }
 
-bool IsEnPassant (Move m) {
-    return GetFlags(m) == EN_PASSANT;
+bool IsEnPassant (uint8_t mf) {
+    return mf == EN_PASSANT;
 }
 
-bool IsPromotion (Move m) {
-    return GetFlags(m) & 0b1000;
+bool IsPromotion (uint8_t mf) {
+    return mf & 0b1000;
 }
 
-bool IsKSCastle (Move m) {
-    return GetFlags(m) == CASTLE_KS;
+bool IsKSCastle (uint8_t mf) {
+    return mf == CASTLE_KS;
 }
 
-bool IsQSCastle (Move m) {
-    return GetFlags(m) == CASTLE_QS;
+bool IsQSCastle (uint8_t mf) {
+    return mf == CASTLE_QS;
 }
 
-bool IsDoublePawn (Move m) {
-    return GetFlags(m) == DOUBLE_PAWN;
+bool IsDoublePawn (uint8_t mf) {
+    return mf == DOUBLE_PAWN;
 }
 
 Piece GetPromotionPieceFromMove (Move m) {
@@ -91,8 +91,8 @@ Piece GetMovedPieceFromMove (Move m) {
 }
 
 std::string GetNotationFromMove (Move m) {
-    std::string s;
-    return  s + (char)(GetStartPos(m) % 8 + 'a'+1) + std::to_string(GetStartPos(m) / 8 + 1) + (char)(GetFinalPos(m) % 8 + 'a') + std::to_string(GetFinalPos(m) / 8 + 1);
+    std::string s = "";
+    return  s + GetPosFile(GetStartPos(m)) + GetPosRank(GetStartPos(m)) + GetPosFile(GetFinalPos(m)) + GetPosRank(GetFinalPos(m));
 }
 
 char GetPosFile(uint32_t pos) {
@@ -106,27 +106,28 @@ char GetPosRank(uint32_t pos) {
 std::string GetPGNFromMove (Move m) {
     std::stringstream ss;
     Piece p = GetMovedPieceFromMove(m);
+    uint8_t flags = GetFlags(m);
     char piece_notation = PieceToChar(p | WHITE);
     uint32_t start = GetStartPos(m) , final = GetFinalPos(m);
-    if (IsKSCastle(m)){
+    if (IsKSCastle(flags)){
         ss << "O-O";
     }
-    else if(IsQSCastle(m)){
+    else if(IsQSCastle(flags)){
         ss << "O-O-O";
     }
     else{
         if (p != PAWN) {
             ss << piece_notation << GetPosFile(start) << GetPosRank(start);
-            if (IsCapture(m)) { // piece takes
+            if (IsCapture(flags)) { // piece takes
                 ss << 'x';
             }
             ss << GetPosFile(final) << GetPosRank(final);
         } else {
-            if (IsCapture(m)) { // pawn takes
+            if (IsCapture(flags)) { // pawn takes
                 ss << GetPosFile(start) << 'x';
             }
             ss << GetPosFile(final) << GetPosRank(final);
-            if (IsPromotion(m)) {
+            if (IsPromotion(flags)) {
                 ss << '=' << PieceToChar(GetPromotionPieceFromMove(m));
             }
         }

@@ -209,7 +209,7 @@ void GUI::FillHighlightMatrix () {
         int square_to_fill = GetStartPos(move_set[i]);
         PosMove pm(i, GetFinalPos(move_set[i]));
         highlight_matrix[square_to_fill]->push_back(pm);
-        if (IsPromotion(move_set[i])) i += 3;
+        if (IsPromotion(GetFlags(move_set[i]))) i += 3;
     }
 }
 
@@ -261,7 +261,7 @@ void GUI::HandleBoardClick (int x, int y) {
             auto move_to_execute = std::find(highlight_matrix[selected_square]->begin(), highlight_matrix[selected_square]->end(), board_index);
 
             if (move_to_execute != highlight_matrix[selected_square]->end()) {
-                if (IsPromotion(move_set.At(move_to_execute->index))) {
+                if (IsPromotion(GetFlags(move_set.At(move_to_execute->index)))) {
                     GiveUserPromotionChoice(move_to_execute->index);
                     return;
                 }
