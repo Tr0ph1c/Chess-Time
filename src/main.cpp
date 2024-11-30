@@ -131,19 +131,20 @@ void StartDivPerft (int max_depth) {
     printf("\nCombined: %llu\n", combined);
 }
 
-void PrintHelp(){
+void PrintHelp () {
     std::cout << help_str;
 }
-void CopyPGN(){
 
+void CopyPGN () {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         std::cerr << "SDL Initialization Error: " << SDL_GetError() << std::endl;
     }
-    if(SDL_SetClipboardText(board.ExportPGN().c_str()) == 0){ // Returns 0 on success or a negative error code on failure
+    if (SDL_SetClipboardText(board.ExportPGN().c_str()) == 0){ // Returns 0 on success or a negative error code on failure
         std::cout << "pgn copied successfully\n";
-    }else{
+    } else {
         std::cout << "cannot copy pgn\n";
     }
+
     SDL_Quit();
 }
 
