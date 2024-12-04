@@ -21,6 +21,7 @@ bool running = true;
 
 private:
 Board* board;
+std::vector<Move>::reverse_iterator curr;
 
 SDL_Window*  window;
 SDL_Renderer* renderer;
@@ -100,7 +101,16 @@ void Select (int square);
 void ExecutePromotion (int promotion_offset);
 void GiveUserPromotionChoice (int move_index);
 
+void ResetCurr();
+void IncCurr(); // increment current if can
+void DecCurr(); // decrement current if can
+bool IsLastMovePlayed();
+bool ConnotDecCurr();
+
+
+
 void UndoUserMove ();
+void RedoUserMove ();
 void HandleBoardClick (int x, int y);
 void Click (int x, int y, bool mouse_down);
 

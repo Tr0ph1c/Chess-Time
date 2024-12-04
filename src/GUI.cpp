@@ -12,6 +12,25 @@
 #include <iostream>
 #include <algorithm>
 #include <unordered_map>
+#include <vector>
+
+void GUI::ResetCurr(){
+    curr = board->tracker.move_history.rbegin();
+}
+void GUI::IncCurr() {
+    if (!GUI::IsLastMovePlayed())
+        curr--;
+}
+void GUI::DecCurr() {
+    if (!ConnotDecCurr())
+        curr++;
+}
+bool GUI::IsLastMovePlayed(){
+    return curr == board->tracker.move_history.rbegin() ;
+}
+bool GUI::ConnotDecCurr(){
+    return curr == board->tracker.move_history.rend() || board->tracker.IsEmpty();
+}
 
 GUI::GUI (Board* board) {
     Init(board);
@@ -240,10 +259,19 @@ void GUI::GiveUserPromotionChoice (int move_index) {
 }
 
 void GUI::UndoUserMove () {
-    if (board->tracker.IsEmpty()) return;
-    Deselect();
-    board->UndoMove(board->tracker.GetCurrMove());
-    FetchMoves();
+    if(!ConnotDecCurr()) {
+        Deselect();
+        Move curr_move = *curr;
+        DecCurr();
+        board->UndoMove(curr_move, false,*curr);
+    }
+}
+void GUI::RedoUserMove () {
+    if(!IsLastMovePlayed()){
+        IncCurr();
+        board->ExecuteMove(*curr, false);
+    }
+    if(IsLastMovePlayed()) FetchMoves();
 }
 
 void GUI::HandleBoardClick (int x, int y) {
@@ -266,8 +294,10 @@ void GUI::HandleBoardClick (int x, int y) {
                     return;
                 }
                 board->ExecuteMove(move_set.At(move_to_execute->index));
+
                 FetchMoves();
                 Deselect();
+                ResetCurr();
             } else {
                 Deselect();
                 printf("move not possible\n");
@@ -337,8 +367,10 @@ void GUI::HandleEvents () {
         case SDL_KEYDOWN:
             if (event.key.keysym.sym >= SDLK_1 && event.key.keysym.sym <= SDLK_4) {
                 ExecutePromotion(event.key.keysym.sym - SDLK_1);
-            } else if (event.key.keysym.sym == SDLK_LEFT) {
+            } else if (event.key.keysym.sym == SDLK_LEFT ) {
                 UndoUserMove();
+            } else if (event.key.keysym.sym == SDLK_RIGHT) {
+                RedoUserMove();
             } else if (event.key.keysym.sym == SDLK_ESCAPE) {
                 running = false;
             }
@@ -483,11 +515,7 @@ void GUI::Init (Board* _board) {
         target_delta = 1000 / mode.refresh_rate;
     }
 
-    //components
-    // Components::arrow_png = arrow_png;
-    // Components::renderer  = renderer;
-
-    // Components::components.push(new Components::NextBtn(0, 0, &controls));
+    ResetCurr();
 }
 
 void GUI::Shutdown () {
