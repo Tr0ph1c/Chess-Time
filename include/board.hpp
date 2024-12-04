@@ -35,10 +35,9 @@ class SizeArray {
 };
 
 class GameTracker {
-private:
-    std::vector<Move> move_history;
 
 public:
+    std::vector<Move> move_history;
     size_t MovesCount();
     bool IsEmpty();
     Move GetCurrMove();
@@ -113,8 +112,9 @@ class Board {
     bool IsSquareAttacked (int square_index);
     bool MoveWillExposeKing (Move); // Only used for en passant
 
-    void ExecuteMove    (Move);
-    void UndoMove       (Move);
+    void ExecuteMove    (Move move, bool add_to_move_history = true              );
+    void UndoMove       (Move move, bool forever = true, Move past_move = (Move)0);
+
 
     static int FullMovesToHalfMoves (int, bool);
     static int HalfMovesToFullMoves (int);
