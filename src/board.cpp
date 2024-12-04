@@ -490,7 +490,7 @@ bool Board::MoveWillExposeKing (Move m) {
     return is_in_check;
 }
 
-void Board::ExecuteMove (Move move, bool add_to_move_history) {
+void Board::ExecuteMove (Move move, bool forever) {
     /* Make the move */
     uint8_t start_pos, final_pos, moved_piece, raw_moved_piece, captured_piece, flags;
     bool white_color;
@@ -503,7 +503,7 @@ void Board::ExecuteMove (Move move, bool add_to_move_history) {
     captured_piece = GetCapturedPieceFromMove(move);
     white_color = IsWhiteToPlay();
 
-    if(add_to_move_history) tracker.PushMove(move);
+    if (forever) tracker.PushMove(move);
 
     squares[final_pos] = moved_piece;
     squares[start_pos] = EMPTY;
@@ -573,7 +573,7 @@ void Board::ExecuteMove (Move move, bool add_to_move_history) {
     /* Update board state */
 }
 
-void Board::UndoMove (Move move , bool forever , Move past_move) {
+void Board::UndoMove (Move move, bool forever) {
     uint8_t start_pos, final_pos, moved_piece, moved_piece_color, captured_piece_color, flags, captured_piece = 0;
 
     start_pos = GetStartPos(move);
@@ -585,7 +585,7 @@ void Board::UndoMove (Move move , bool forever , Move past_move) {
     if (IsCapture(flags)) captured_piece = GetCapturedPieceFromMove(move) | captured_piece_color;
     int dir = (captured_piece_color == WHITE)? 1 : -1;
 
-    if(forever) tracker.UndoMove();
+    if (forever) tracker.UndoMove();
 
     // replace the piece to its original square
     // if the move was a promotion, demote the piece
@@ -602,11 +602,13 @@ void Board::UndoMove (Move move , bool forever , Move past_move) {
     
     // check if the move before the undone move was a double pawn push
     // if so, then set the en passant square
-    if(forever) past_move = tracker.GetCurrMove();
-    if (!tracker.IsEmpty() && IsDoublePawn(GetFlags(past_move))) {
-        enpassant_place = GetStartPos(past_move) + (dir * 8);
-    } else {
-        enpassant_place = -1;
+    if (forever) {
+        Move past_move = tracker.GetCurrMove();
+        if (!tracker.IsEmpty() && IsDoublePawn(GetFlags(past_move))) {
+            enpassant_place = GetStartPos(past_move) + (dir * 8);
+        } else {
+            enpassant_place = -1;
+        }
     }
 
     /* Update Board State */

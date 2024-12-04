@@ -14,21 +14,25 @@
 #include <unordered_map>
 #include <vector>
 
-void GUI::ResetCurr(){
+void GUI::ResetCurr () {
     curr = board->tracker.move_history.rbegin();
 }
-void GUI::IncCurr() {
+
+void GUI::IncCurr () {
     if (!GUI::IsLastMovePlayed())
         curr--;
 }
-void GUI::DecCurr() {
+
+void GUI::DecCurr () {
     if (!ConnotDecCurr())
         curr++;
 }
-bool GUI::IsLastMovePlayed(){
-    return curr == board->tracker.move_history.rbegin() ;
+
+bool GUI::IsLastMovePlayed () {
+    return curr == board->tracker.move_history.rbegin();
 }
-bool GUI::ConnotDecCurr(){
+
+bool GUI::ConnotDecCurr () {
     return curr == board->tracker.move_history.rend() || board->tracker.IsEmpty();
 }
 
@@ -250,6 +254,7 @@ void GUI::ExecutePromotion (int promotion_offset) {
         board->ExecuteMove(move_set.At(promotion_index + promotion_offset));
         FetchMoves();
         Deselect();
+        ResetCurr();
     }
 }
 
@@ -259,19 +264,18 @@ void GUI::GiveUserPromotionChoice (int move_index) {
 }
 
 void GUI::UndoUserMove () {
-    if(!ConnotDecCurr()) {
+    if(!ConnotDecCurr() && !is_user_promoting) {
         Deselect();
-        Move curr_move = *curr;
+        board->UndoMove(*curr, false);
         DecCurr();
-        board->UndoMove(curr_move, false,*curr);
     }
 }
+
 void GUI::RedoUserMove () {
-    if(!IsLastMovePlayed()){
+    if(!IsLastMovePlayed() && !is_user_promoting) {
         IncCurr();
         board->ExecuteMove(*curr, false);
     }
-    if(IsLastMovePlayed()) FetchMoves();
 }
 
 void GUI::HandleBoardClick (int x, int y) {
@@ -318,11 +322,13 @@ void GUI::Click (int x, int y, bool mouse_down) {
         y > BoardRect.y + BoardRect.h)
         return;
 
-    if (mouse_down) {
-        HandleBoardClick(x, y);
-    } else {
-        if (IsSelected())
+    if (IsLastMovePlayed()) {
+        if (mouse_down) {
             HandleBoardClick(x, y);
+        } else {
+            if (IsSelected())
+                HandleBoardClick(x, y);
+        }
     }
 }
 

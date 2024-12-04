@@ -29,4 +29,4 @@ run: all
 	$(BIN)chesstime
 
 clean:
-	del $(BIN)*.o $(BIN)*.exe
+	del /S /Q bin
