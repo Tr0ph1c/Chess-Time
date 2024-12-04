@@ -112,8 +112,8 @@ class Board {
     bool IsSquareAttacked (int square_index);
     bool MoveWillExposeKing (Move); // Only used for en passant
 
-    void ExecuteMove    (Move move, bool add_to_move_history = true              );
-    void UndoMove       (Move move, bool forever = true, Move past_move = (Move)0);
+    void ExecuteMove    (Move, bool forever = true);
+    void UndoMove       (Move, bool forever = true);
 
 
     static int FullMovesToHalfMoves (int, bool);
