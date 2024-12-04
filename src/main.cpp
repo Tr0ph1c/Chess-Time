@@ -63,7 +63,8 @@ void StartAIGame () {
     GUI_instance->FetchMoves();
 
     while (GUI_instance->running) {
-        if (board.IsWhiteToPlay()) {
+
+        if (board.IsWhiteToPlay() || !GUI_instance->IsLastMovePlayed()) {
             GUI_instance->RunGUITick();
         } else {
             Move comp_move = computer.PlayMove();
