@@ -2,6 +2,7 @@
 *.o
 .vscode/
 lib/
+bin/
 *.dll
 CMakeLists.txt
 .idea
