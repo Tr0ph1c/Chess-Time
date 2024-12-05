@@ -120,8 +120,6 @@ class Board {
     static int HalfMovesToFullMoves (int);
     static int NotationToBoardIndex (int, char);
     static int NotationToBoardIndex (int, int);
-
-    std::string ExportPGN();
 };
 
 class HelperClass {

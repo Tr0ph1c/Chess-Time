@@ -1,6 +1,4 @@
 // TODO:
-//      * Make object files for faster building of project
-//      * Make a helper function that takes a board index and transforms it to UCI notation ie c6
 //      * Add sound to GUI
 //      * Introduce a Perft Suite that tests for perft results on multiple depths
 //   from multiple positions and compares those against a set of known perft
@@ -140,7 +138,7 @@ void CopyPGN () {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         std::cerr << "SDL Initialization Error: " << SDL_GetError() << std::endl;
     }
-    if (SDL_SetClipboardText(board.ExportPGN().c_str()) == 0){ // Returns 0 on success or a negative error code on failure
+    if (SDL_SetClipboardText(board.tracker.ExportPGN().c_str()) == 0) { // Returns 0 on success or a negative error code on failure
         std::cout << "pgn copied successfully\n";
     } else {
         std::cout << "cannot copy pgn\n";
@@ -178,7 +176,7 @@ int main (int argc, char** args) {
             } else if (command == "copy-pgn") {
                 CopyPGN();
             } else if (command == "get-pgn") {
-                 std::cout << board.ExportPGN();
+                 std::cout << board.tracker.ExportPGN();
             } else {
                 printf("Unknown command\n");
             }

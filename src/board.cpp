@@ -23,10 +23,6 @@ void Board::PrintBoard () {
         fifty_move_rule,
         HalfMovesToFullMoves(half_moves));
 }
-std::string Board::ExportPGN(){
-    return tracker.ExportPGN();
-}
-
 
 // TODO:
 // Stress test the LoadBoard function.
