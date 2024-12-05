@@ -19,9 +19,18 @@ void RunGUITick ();
 void FetchMoves ();
 bool running = true;
 
+void IncCurr(); // increment current if can
+void DecCurr(); // decrement current if can
+bool IsLastMovePlayed();
+bool ConnotDecCurr();
+
 private:
 Board* board;
-std::vector<Move>::reverse_iterator curr;
+
+struct {
+    std::vector<Move>::reverse_iterator curr;
+    bool is_last_move;
+}move_history_info;
 
 SDL_Window*  window;
 SDL_Renderer* renderer;
@@ -101,14 +110,10 @@ void Select (int square);
 void ExecutePromotion (int promotion_offset);
 void GiveUserPromotionChoice (int move_index);
 
-void ResetCurr();
-void IncCurr(); // increment current if can
-void DecCurr(); // decrement current if can
-bool IsLastMovePlayed();
-bool ConnotDecCurr();
 
 
 
+private:
 void UndoUserMove ();
 void RedoUserMove ();
 void HandleBoardClick (int x, int y);
