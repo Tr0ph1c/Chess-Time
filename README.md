@@ -19,8 +19,10 @@
     * `start`            : starts a GUI board with the position from `position`.
     * `startai`          : starts a game against an AI adversary.
     * `perft [depth]`    : starts an iterative [perft test](https://www.chessprogramming.org/Perft) starting from `position` till `[depth]` and prints the results.
-    * `divide [depth]`   : outputs the perft result for the sub-tree of each move in the current position. 
+    * `divide [depth]`   : outputs the perft result for the sub-tree of each move in the current position.
+    * `get-pgn`          : outputs the played game as pgn.
+    * `copy-pgn`         : copy the pgn of played game to the clipboard.
 - GUI:
-    * Any click can be initiated using mouse0 or mouse1.
     * Click to select a piece, click on a square to move the selected piece to the clicked square.
-    * Press the "Back arrow" key on the keyboard to irreversibly undo the last move.
+    * Click and hold to drag a piece.
+    * Left and right keyboard arrows can be used to seek through the game.
