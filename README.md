@@ -12,7 +12,7 @@
 - [SDL_ttf](https://github.com/libsdl-org/SDL_ttf/releases/tag/release-2.22.0)
 
 # How to use
-* After building the project, run the `chesstime` executable.
+* After building the project, run the `chesstime` executable stored in the `./bin/` directory.
 - CLI:
     * `exit`             : exits the program.
     * `position [FEN/X]` : sets the `position` to `[FEN]`, only accepts valid [FEN strings](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation) OR "X" for the standard starting chess position.
