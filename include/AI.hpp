@@ -1,26 +1,183 @@
 #pragma once
 
-#include "board.hpp"
 #include "move.hpp"
 #include "piece.hpp"
+#include "board.hpp"
+
 #include <limits>
 
 class AI {
+    Board* board;
+
+    // Convenient to have these values stored
     const int AI_INFINITY = std::numeric_limits<int>::max();
-    const int queen_value = 900;
-    const int rook_value = 500;
-    const int bishop_value = 320;
-    const int knight_value = 300;
-    const int pawn_value = 100;
+    const int CHECKMATE = 999999;
+
+    // Piece values based upon the following restrictions:
+    // B > N > 3P
+    // B + N = R + 1.5P
+    // Q + P = 2R
+    // * Piece indices:
+    // [0] W_King [1] W_Knight, [2] W_Pawn, [3] W_Queen, [4] W_Bishop, [5] W_Rook 
+    // [8] B_King [9] B_Knight, [10] B_Pawn, [11] B_Queen, [12] B_Bishop, [13] B_Rook
+    const int piece_values[14] = {1000, 320, 100, 900, 330, 500, 0, 0, -1000, -320, -100, -900, -330, -500};
+
+    // [0] King [1] Knight, [2] Pawn, [3] Queen, [4] Bishop, [5] Rook 
+    const int raw_piece_values[6] = {1000, 320, 100, 900, 330, 500};
+
+    int evaluated_positions = 0;
+
+    // Piece Square Tables:
+    // Matrices of favored squares by each piece type
+    // * Order as follows:
+    // [0] Knight, [1] Pawn, [2] Queen, [3] Bishop, [4] Rook
+    #define VALUE_OF_POSITION(PIECE, POSITION) piece_square_tables[PIECE - W_KING][POSITION]
+    const int piece_square_tables[14][64] =
+    {
+        // WHITE
+        { // KING
+            20, 30, 10,  0,  0, 10, 30, 20,
+            20, 20,  0,  0,  0,  0, 20, 20,
+            -10,-20,-20,-20,-20,-20,-20,-10,
+            -20,-30,-30,-40,-40,-30,-30,-20,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30
+        },
+        { // KNIGHT
+            -50,-40,-30,-30,-30,-30,-40,-50,
+            -40,-20,  0,  5,  5,  0,-20,-40,
+            -30,  5, 10, 15, 15, 10,  5,-30,
+            -30,  0, 15, 20, 20, 15,  0,-30,
+            -30,  5, 15, 20, 20, 15,  5,-30,
+            -30,  0, 10, 15, 15, 10,  0,-30,
+            -40,-20,  0,  0,  0,  0,-20,-40,
+            -50,-40,-30,-30,-30,-30,-40,-50
+        },
+        { // PAWN
+            0,  0,  0,  0,  0,  0,  0,  0,
+            5, 10, 10,-20,-20, 10, 10,  5,
+            0,  0,  0, 20, 20,  0,  0,  0,
+            5,  5, 10, 25, 25, 10,  5,  5,
+            5,  5, 10, 25, 25, 10,  5,  5,
+            10, 10, 20, 30, 30, 20, 10, 10,
+            50, 50, 50, 50, 50, 50, 50, 50,
+            0,  0,  0,  0,  0,  0,  0,  0
+        },
+        { // QUEEN
+            -20,-10,-10, -5, -5,-10,-10,-20,
+            -10,  0,  5,  0,  0,  0,  0,-10,
+            -10,  5,  5,  5,  5,  5,  0,-10,
+              0,  0,  5,  5,  5,  5,  0, -5,
+             -5,  0,  5,  5,  5,  5,  0, -5,
+            -10,  0,  5,  5,  5,  5,  0,-10,
+            -10,  0,  0,  0,  0,  0,  0,-10,
+            -20,-10,-10, -5, -5,-10,-10,-20
+        },
+        { // BISHOP
+            -20,-10,-10,-10,-10,-10,-10,-20,
+            -10,  5,  0,  0,  0,  0,  5,-10,
+            -10, 10, 10, 10, 10, 10, 10,-10,
+            -10,  0, 10, 10, 10, 10,  0,-10,
+            -10,  5,  5, 10, 10,  5,  5,-10,
+            -10,  0,  5, 10, 10,  5,  0,-10,
+            -10,  0,  0,  0,  0,  0,  0,-10,
+            -20,-10,-10,-10,-10,-10,-10,-20
+        },
+        { // ROOK
+            0,  0,  0,  5,  5,  0,  0,  0,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            5, 10, 10, 10, 10, 10, 10,  5,
+            0,  0,  0,  0,  0,  0,  0,  0
+        },
+        {0},{0},
+        // BLACK
+        { // KING
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -30,-40,-40,-50,-50,-40,-40,-30,
+            -20,-30,-30,-40,-40,-30,-30,-20,
+            -10,-20,-20,-20,-20,-20,-20,-10,
+            20, 20,  0,  0,  0,  0, 20, 20,
+            20, 30, 10,  0,  0, 10, 30, 20
+        },
+        { // KNIGHT
+            -50,-40,-30,-30,-30,-30,-40,-50,
+            -40,-20,  0,  0,  0,  0,-20,-40,
+            -30,  0, 10, 15, 15, 10,  0,-30,
+            -30,  5, 15, 20, 20, 15,  5,-30,
+            -30,  0, 15, 20, 20, 15,  0,-30,
+            -30,  5, 10, 15, 15, 10,  5,-30,
+            -40,-20,  0,  5,  5,  0,-20,-40,
+            -50,-40,-30,-30,-30,-30,-40,-50
+        },
+        { // PAWN
+            0,  0,  0,  0,  0,  0,  0,  0,
+            50, 50, 50, 50, 50, 50, 50, 50,
+            10, 10, 20, 30, 30, 20, 10, 10,
+            5,  5, 10, 25, 25, 10,  5,  5,
+            5,  5, 10, 25, 25, 10,  5,  5,
+            0,  0,  0, 20, 20,  0,  0,  0,
+            5, 10, 10,-20,-20, 10, 10,  5,
+            0,  0,  0,  0,  0,  0,  0,  0
+        },
+        { // QUEEN
+            -20,-10,-10, -5, -5,-10,-10,-20,
+            -10,  0,  0,  0,  0,  0,  0,-10,
+            -10,  0,  5,  5,  5,  5,  0,-10,
+             -5,  0,  5,  5,  5,  5,  0, -5,
+              0,  0,  5,  5,  5,  5,  0, -5,
+            -10,  5,  5,  5,  5,  5,  0,-10,
+            -10,  0,  5,  0,  0,  0,  0,-10,
+            -20,-10,-10, -5, -5,-10,-10,-20
+        },
+        { // BISHOP
+            -20,-10,-10,-10,-10,-10,-10,-20,
+            -10,  0,  0,  0,  0,  0,  0,-10,
+            -10,  0,  5, 10, 10,  5,  0,-10,
+            -10,  5,  5, 10, 10,  5,  5,-10,
+            -10,  0, 10, 10, 10, 10,  0,-10,
+            -10, 10, 10, 10, 10, 10, 10,-10,
+            -10,  5,  0,  0,  0,  0,  5,-10,
+            -20,-10,-10,-10,-10,-10,-10,-20
+        },
+        { // ROOK
+            0,  0,  0,  0,  0,  0,  0,  0,
+            5, 10, 10, 10, 10, 10, 10,  5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            -5,  0,  0,  0,  0,  0,  0, -5,
+            0,  0,  0,  5,  5,  0,  0,  0
+        }
+    };
+
+    // How much does each piece influence the phase of the game
+    // Higher value => futher away from "endgame"
+    const int game_phase_increment[12] = {0, 0, 1, 0, 4, 1, 2};
 
     public:
-    Board* board;
     Move chosen_move;
-    int search_depth = 5;
+    const int search_depth = 6;
 
     AI (Board*);
 
-    Move PlayMove ();
+    virtual Move CalculateMove ();
     int Search (int depth, int alpha, int beta);
+    int QuiescentSearch (int, int);
+    
+    void ScoreMoves (SizeArray*, int*);
+    void PickMove(SizeArray*, int*, int);
+    
     int Evaluate ();
+    int ForceKingToCornerHeuristic (int friendly_king_square, int enemy_king_square, float endgame_weight);
+    inline int PieceValue (Piece p)    { return piece_values[(p - W_KING)]; }
+    inline int RawPieceValue (Piece p) { return raw_piece_values[(p - KING)]; }
 };

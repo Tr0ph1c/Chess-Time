@@ -1,10 +1,11 @@
 #pragma once
+
 #include <iostream>
 #include <cstdint>
 
 typedef uint8_t Piece;
 
-// 4-bit representation of a piece
+// 5-bit representation of a piece
 // ===================================
 //  00     000
 // color  piece
