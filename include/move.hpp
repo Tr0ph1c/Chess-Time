@@ -3,6 +3,9 @@
 #include "piece.hpp"
 #include <iostream>
 
+#define Rank(X) X/8
+#define File(X) X%8
+
 typedef uint32_t Move;
 
 // 23-bit representation of a move:
