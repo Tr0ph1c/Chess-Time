@@ -26,6 +26,7 @@ class SizeArray {
     size_t Size ();
     void AddValue (uint32_t);
     void AddRestrictedMove (Move m, SizeArray* path);
+    void ChangeAt (size_t, uint32_t);
     // TODO:
     // Use the trim function after generating the moves
     // then check and document any performance changes.
@@ -35,8 +36,7 @@ class SizeArray {
 };
 
 class GameTracker {
-
-public:
+    public:
     std::vector<Move> move_history;
     size_t MovesCount();
     bool IsEmpty();

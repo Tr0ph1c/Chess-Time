@@ -759,9 +759,8 @@ void SizeArray::AddValue (uint32_t val) {
 void SizeArray::AddRestrictedMove (Move m, SizeArray* path) {
     if (capacity == size) return;
     if (!path->Empty()) {
-        uint32_t final_pos = GetFinalPos(m);
         for (size_t i = 0; i < path->Size(); ++i) {
-            if (final_pos == path->At(i)) {
+            if (GetFinalPos(m) == path->At(i)) {
                 array[size] = m;
                 size++;
                 break;
@@ -771,6 +770,10 @@ void SizeArray::AddRestrictedMove (Move m, SizeArray* path) {
         array[size] = m;
         size++;
     }
+}
+
+void SizeArray::ChangeAt (size_t index, uint32_t value) {
+    array[index] = value;
 }
 
 void SizeArray::Trim () {
