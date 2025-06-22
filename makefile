@@ -4,10 +4,10 @@ CFLAGS = -g -Wall
 LIBS =
 UNAME_S = $(shell uname -s)
 ifeq ($(OS),Windows_NT)
-	LIBS = -L./lib/ -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image
+	LIBS = -L./lib/ -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_mixer
 else
     ifeq ($(UNAME_S),Linux)
-		LIBS = -lSDL2 -lSDL2_ttf -lSDL2_image
+		LIBS = -lSDL2 -lSDL2_ttf -lSDL2_image -lSDL2_mixer
     endif
 endif
 
