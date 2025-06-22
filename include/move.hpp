@@ -56,13 +56,13 @@ Move CreateMove (uint32_t _start, uint32_t _final, uint32_t _flags, uint32_t _ca
 /*
 Shorthands for analyzing flags
 */
-bool IsNormalMove     (uint8_t);
-bool IsCapture        (uint8_t);
-bool IsEnPassant      (uint8_t);
-bool IsPromotion      (uint8_t);
-bool IsKSCastle       (uint8_t);
-bool IsQSCastle       (uint8_t);
-bool IsDoublePawn     (uint8_t);
+bool IsNormalMove     (uint8_t flags);
+bool IsCapture        (uint8_t flags);
+bool IsEnPassant      (uint8_t flags);
+bool IsPromotion      (uint8_t flags);
+bool IsKSCastle       (uint8_t flags);
+bool IsQSCastle       (uint8_t flags);
+bool IsDoublePawn     (uint8_t flags);
 
 inline uint32_t GetStartPos     (Move m) { return (m >> 6) & 0x3F; }
 inline uint32_t GetFinalPos     (Move m) { return        m & 0x3F; }
