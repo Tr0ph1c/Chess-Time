@@ -67,8 +67,7 @@ void StartAIGame () {
         } else {
             Move comp_move = computer.CalculateMove();
             if (comp_move != 0) {
-                board.ExecuteMove(comp_move);
-                GUI_instance->FetchMoves();
+                GUI_instance->ExecuteMove(comp_move);
             } else {
                 board.color_to_play = SwitchColor(board.color_to_play);
             }

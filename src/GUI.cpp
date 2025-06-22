@@ -240,12 +240,22 @@ void GUI::Select (int square) {
     selected_square = square;
 }
 
+void GUI::ExecuteMove (Move move) {
+    if (IsCapture(GetFlags(move))) {
+        Mix_PlayChannel(-1, sfx_capture, 0);
+    } else {
+        Mix_PlayChannel(-1, sfx_move, 0);
+    }
+
+    board->ExecuteMove(move);
+    FetchMoves();
+    Deselect();
+}
+
 void GUI::ExecutePromotion (int promotion_offset) {
     if (is_user_promoting) {
         is_user_promoting = false;
-        board->ExecuteMove(move_set.At(promotion_index + promotion_offset));
-        FetchMoves();
-        Deselect();
+        ExecuteMove(move_set.At(promotion_index + promotion_offset));
     }
 }
 
@@ -294,11 +304,7 @@ void GUI::HandleBoardClick (int x, int y) {
                     GiveUserPromotionChoice(move_to_execute->index);
                     return;
                 }
-                board->ExecuteMove(move_set.At(move_to_execute->index));
-
-                FetchMoves();
-                Deselect();
-
+                ExecuteMove(move_set.At(move_to_execute->index));
             } else {
                 Deselect();
                 printf("move not possible\n");
@@ -447,6 +453,18 @@ void GUI::InitTextures () {
     }
 }
 
+void GUI::InitSounds () {
+    Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024);
+
+    sfx_move = Mix_LoadWAV("assets/sfx/move.mp3");
+    sfx_capture = Mix_LoadWAV("assets/sfx/capture.mp3");
+
+    if (!sfx_move || !sfx_capture) {
+        fprintf(stderr, "A sound file could not be loaded.\n");
+        exit(-1);
+    }
+}
+
 void GUI::Init (Board* _board) {
     board = _board;
     InitializeHighlightMatrix();
@@ -505,8 +523,14 @@ void GUI::Init (Board* _board) {
         exit(-1);
     }
 
+    if (Mix_Init(MIX_INIT_MP3) < 0) {
+        fprintf(stderr, "Error initializing SDL_MIXER: %s\n", Mix_GetError());
+        exit(-1);
+    }
+
     InitTextures();
     InitRects();
+    InitSounds();
 
     // Get refresh rate of screen and set framerate of GUI refreshing
     SDL_DisplayMode mode;
@@ -528,6 +552,9 @@ void GUI::Shutdown () {
     //SDL_DestroyTexture(arrow_png);
     SDL_DestroyTexture(promo_tip_png);
     IMG_Quit();
+
+    //Mix_CloseAudio(...);
+    Mix_Quit();
 
     TTF_CloseFont(ConsolaFont);
     TTF_Quit();

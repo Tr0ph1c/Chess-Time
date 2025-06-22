@@ -4,6 +4,7 @@
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
 #include "SDL2/SDL_ttf.h"
+#include "SDL2/SDL_mixer.h"
 
 #define BOARD_W 700
 #define BOARD_H 700
@@ -16,6 +17,7 @@ GUI (Board*);
 ~GUI ();
 
 void RunGUITick ();
+void ExecuteMove (Move move);
 void FetchMoves ();
 bool running = true;
 
@@ -57,6 +59,10 @@ SDL_Color HighlightColor = {.r = 255 , .g = 255 , .b = 0 ,.a = 90};
 // FONTS
 TTF_Font *ConsolaFont;
 
+// AUDIO
+Mix_Chunk *sfx_move;
+Mix_Chunk *sfx_capture;
+
 class PosMove {
     public:
     int position;
@@ -87,11 +93,12 @@ int frame_delta;
 void Init (Board* _board);
 void InitRects ();
 void InitTextures ();
+void InitSounds ();
 
 // void RenderBoardRightSide ();
 // void DrawArrow (int relevant_x ,int relevant_y ,bool is_to_right , SDL_Rect &parent);
 void DrawPieceInside (SDL_Rect & dest, int rank, int file);
-void DrawChessSquare (SDL_Color Color, int rank, int file);
+void DrawChessSquare (SDL_Color color, int rank, int file);
 void RenderHeldPiece ();
 void RenderBoard ();
 void ShowFrame ();
